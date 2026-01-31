@@ -132,7 +132,7 @@ export function dismissToast(toastId: string | number): void {
 /**
  * Show a promise toast that handles loading, success, and error states
  */
-export function showPromiseToast<T>(
+export async function showPromiseToast<T>(
   promise: Promise<T>,
   messages: {
     loading: string
@@ -140,9 +140,10 @@ export function showPromiseToast<T>(
     error?: string | ((error: unknown) => string)
   }
 ): Promise<T> {
-  return toast.promise(promise, {
+  toast.promise(promise, {
     loading: messages.loading,
     success: messages.success,
     error: messages.error || ((error) => getErrorMessage(error)),
   })
+  return promise
 }
