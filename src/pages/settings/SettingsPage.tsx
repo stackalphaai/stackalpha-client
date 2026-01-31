@@ -568,25 +568,41 @@ export default function SettingsPage() {
               ) : (
                 <div className="space-y-4">
                   {telegram?.verification_code ? (
-                    <div className="p-4 rounded-lg bg-muted/50">
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Send this code to our Telegram bot:
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <code className="text-lg font-mono bg-background px-3 py-1 rounded">
-                          {telegram.verification_code}
-                        </code>
+                    <div className="p-4 rounded-lg bg-muted/50 space-y-4">
+                      <div>
+                        <p className="text-sm font-medium mb-2">
+                          Click the button below to connect your Telegram:
+                        </p>
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => copyToClipboard(telegram.verification_code || "")}
+                          variant="gradient"
+                          className="w-full"
+                          onClick={() => {
+                            if (telegram.deep_link) {
+                              window.open(telegram.deep_link, "_blank")
+                            }
+                          }}
                         >
-                          <Copy className="h-4 w-4" />
+                          <Send className="h-4 w-4 mr-2" />
+                          Open Telegram Bot
                         </Button>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Bot: @stackalpha_bot
-                      </p>
+                      <div className="border-t pt-4">
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Or copy this link manually:
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <code className="text-xs font-mono bg-background px-2 py-1 rounded truncate flex-1">
+                            {telegram.deep_link || `https://t.me/${telegram.bot_username || "stackalpha_bot"}?start=${telegram.verification_code}`}
+                          </code>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => copyToClipboard(telegram.deep_link || `https://t.me/${telegram.bot_username || "stackalpha_bot"}?start=${telegram.verification_code}`)}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <Button variant="gradient" onClick={handleConnectTelegram}>

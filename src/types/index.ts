@@ -136,6 +136,8 @@ export interface TelegramConnection {
   is_connected: boolean
   telegram_username: string | null
   verification_code: string | null
+  deep_link: string | null
+  bot_username: string | null
   notifications_enabled: boolean
   signal_notifications: boolean
   trade_notifications: boolean
