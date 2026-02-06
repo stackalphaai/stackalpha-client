@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TopGainers } from "@/components/features/TopGainers"
 import { tradingApi } from "@/services/api"
 import type { MarketData } from "@/types"
 
@@ -129,6 +130,9 @@ export default function MarketsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Top Movers - Real-time via WebSocket */}
+      <TopGainers limit={10} />
 
       {/* Markets Table */}
       <Card>

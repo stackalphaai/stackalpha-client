@@ -67,7 +67,8 @@ export function Sidebar() {
                 className="flex items-center gap-2"
               >
                 <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-                  <Zap className="h-5 w-5 text-white" />
+                <img className="h-5 w-5" src="https://res.cloudinary.com/deioo5lrm/image/upload/v1769925235/stackalpha_qyuyms.png" alt="" />
+                  {/* <Zap className="h-5 w-5 text-white" /> */}
                 </div>
                 <span className="font-bold text-xl bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                   StackAlpha

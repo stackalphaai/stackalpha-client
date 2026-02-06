@@ -64,7 +64,7 @@ export function HomePage() {
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
+                <img className="h-10 w-10" src="https://res.cloudinary.com/deioo5lrm/image/upload/v1769925235/stackalpha_qyuyms.png" alt="" />
               </div>
               <span className="text-xl font-bold gradient-text">StackAlpha</span>
             </Link>

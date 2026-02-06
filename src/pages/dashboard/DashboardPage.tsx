@@ -25,6 +25,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TopGainers } from "@/components/features/TopGainers"
 import { analyticsApi, tradingApi, walletApi } from "@/services/api"
 import { useAuthStore } from "@/stores/auth"
 import type { Signal, Trade, DailyPnL, TradeAnalytics } from "@/types"
@@ -329,71 +330,79 @@ export default function DashboardPage() {
         </motion.div>
       </div>
 
-      {/* Open Trades */}
-      <motion.div variants={itemVariants}>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Open Trades</CardTitle>
-              <CardDescription>Your active positions</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/trades")}>
-              View All
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {openTrades.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                No open trades at the moment
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Symbol</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Direction</th>
-                      <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Entry</th>
-                      <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Size</th>
-                      <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">P&L</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {openTrades.map((trade) => (
-                      <tr
-                        key={trade.id}
-                        className="border-b last:border-0 hover:bg-muted/50 transition-colors cursor-pointer"
-                        onClick={() => navigate(`/trades/${trade.id}`)}
-                      >
-                        <td className="py-3 px-4 font-medium">{trade.symbol}</td>
-                        <td className="py-3 px-4">
-                          <Badge variant={trade.direction === "long" ? "long" : "short"}>
-                            {trade.direction.toUpperCase()}
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          ${trade.entry_price?.toLocaleString() || "-"}
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          ${trade.position_size_usd.toLocaleString()}
-                        </td>
-                        <td
-                          className={`py-3 px-4 text-right font-medium ${
-                            (trade.unrealized_pnl || 0) >= 0 ? "text-green-500" : "text-red-500"
-                          }`}
-                        >
-                          {(trade.unrealized_pnl || 0) >= 0 ? "+" : ""}
-                          ${(trade.unrealized_pnl || 0).toFixed(2)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+      {/* Top Movers + Open Trades */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Top Movers - Real-time via WebSocket */}
+        <motion.div variants={itemVariants}>
+          <TopGainers limit={8} />
+        </motion.div>
+
+        {/* Open Trades */}
+        <motion.div variants={itemVariants}>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Open Trades</CardTitle>
+                <CardDescription>Your active positions</CardDescription>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
+              <Button variant="ghost" size="sm" onClick={() => navigate("/trades")}>
+                View All
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {openTrades.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No open trades at the moment
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Symbol</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Direction</th>
+                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Entry</th>
+                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Size</th>
+                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">P&L</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {openTrades.map((trade) => (
+                        <tr
+                          key={trade.id}
+                          className="border-b last:border-0 hover:bg-muted/50 transition-colors cursor-pointer"
+                          onClick={() => navigate(`/trades/${trade.id}`)}
+                        >
+                          <td className="py-3 px-4 font-medium">{trade.symbol}</td>
+                          <td className="py-3 px-4">
+                            <Badge variant={trade.direction === "long" ? "long" : "short"}>
+                              {trade.direction.toUpperCase()}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            ${trade.entry_price?.toLocaleString() || "-"}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            ${trade.position_size_usd.toLocaleString()}
+                          </td>
+                          <td
+                            className={`py-3 px-4 text-right font-medium ${
+                              (trade.unrealized_pnl || 0) >= 0 ? "text-green-500" : "text-red-500"
+                            }`}
+                          >
+                            {(trade.unrealized_pnl || 0) >= 0 ? "+" : ""}
+                            ${(trade.unrealized_pnl || 0).toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
     </motion.div>
   )
 }
