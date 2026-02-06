@@ -245,3 +245,28 @@ export const analyticsApi = {
   getDailyPnL: (days?: number) =>
     api.get("/v1/analytics/daily-pnl", { params: { days } }),
 }
+
+// Risk Management API
+export const riskApi = {
+  getSettings: () => api.get("/v1/risk/settings"),
+  updateSettings: (data: Partial<import("@/types").RiskSettings>) =>
+    api.patch("/v1/risk/settings", data),
+  getPortfolioMetrics: () => api.get("/v1/risk/portfolio-metrics"),
+  calculatePositionSize: (data: {
+    symbol: string
+    entry_price: number
+    stop_loss_price: number
+    signal_confidence?: number
+  }) => api.post("/v1/risk/calculate-position-size", data),
+
+  // Circuit Breaker
+  getCircuitBreakerStatus: () => api.get("/v1/risk/circuit-breaker/status"),
+  pauseTrading: (data: { reason: string; duration_seconds?: number }) =>
+    api.post("/v1/risk/circuit-breaker/pause", data),
+  resumeTrading: () => api.post("/v1/risk/circuit-breaker/resume"),
+  activateKillSwitch: (closePositions: boolean = true) =>
+    api.post("/v1/risk/circuit-breaker/kill-switch", null, {
+      params: { close_positions: closePositions },
+    }),
+  deactivateKillSwitch: () => api.post("/v1/risk/circuit-breaker/deactivate-kill-switch"),
+}

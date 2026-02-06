@@ -179,3 +179,66 @@ export interface DailyPnL {
 }
 
 export type Theme = "light" | "dark" | "system"
+
+// Risk Management Types
+export interface RiskSettings {
+  // Position Sizing
+  position_sizing_method: "fixed_amount" | "fixed_percent" | "kelly" | "risk_parity"
+  max_position_size_usd: number
+  max_position_size_percent: number
+
+  // Portfolio Limits
+  max_portfolio_heat: number
+  max_open_positions: number
+  max_leverage: number
+
+  // Drawdown Limits
+  max_daily_loss_usd: number
+  max_daily_loss_percent: number
+  max_weekly_loss_percent: number
+  max_monthly_loss_percent: number
+
+  // Risk-Reward
+  min_risk_reward_ratio: number
+
+  // Diversification
+  max_correlated_positions: number
+  max_single_asset_exposure_percent: number
+
+  // Circuit Breakers
+  max_consecutive_losses: number
+  trading_paused: boolean
+
+  // Auto-Trading Features
+  enable_trailing_stop: boolean
+  trailing_stop_percent: number
+  enable_scale_out: boolean
+  enable_pyramiding: boolean
+  min_signal_confidence: number
+}
+
+export interface PortfolioMetrics {
+  total_equity: number
+  total_margin_used: number
+  total_unrealized_pnl: number
+  total_realized_pnl_today: number
+  open_positions_count: number
+  portfolio_heat: number
+  margin_utilization: number
+  daily_pnl: number
+  weekly_pnl: number
+  monthly_pnl: number
+  max_drawdown: number
+  consecutive_losses: number
+}
+
+export interface CircuitBreakerStatus {
+  status: "active" | "paused" | "killed"
+  system_health: "healthy" | "degraded" | "critical" | "offline"
+  trading_allowed: boolean
+  paused_reason: string | null
+  paused_at: string | null
+  paused_by: string | null
+  auto_resume_at: string | null
+  open_positions_count: number
+}
