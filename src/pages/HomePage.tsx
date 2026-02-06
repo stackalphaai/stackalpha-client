@@ -22,6 +22,7 @@ import {
   Play,
 } from "lucide-react"
 import { Button } from "@/components/ui"
+import { TopGainers } from "@/components/features"
 import { cn } from "@/lib/utils"
 
 const containerVariants = {
@@ -266,6 +267,41 @@ export function HomePage() {
                 </div>
               </motion.div>
             </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Live Market Data Section */}
+      <section className="py-16 bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-8"
+          >
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium text-primary mb-4">
+              <TrendingUp className="w-4 h-4" />
+              Live Market Data
+            </span>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
+              Real-Time Market Movers from{" "}
+              <span className="gradient-text">Hyperliquid</span>
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Watch the markets move in real-time. Our AI analyzes these trends 24/7 to generate profitable signals.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="max-w-4xl mx-auto"
+          >
+            <TopGainers limit={10} />
           </motion.div>
         </div>
       </section>
