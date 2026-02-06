@@ -24,6 +24,10 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
+  // Debug: Confirm this is the LOGIN page
+  console.log("🔵 LoginPage component rendered - This is the LOGIN page")
+  console.log("🔵 authApi.login endpoint:", "/v1/auth/login")
+
   const [showPassword, setShowPassword] = useState(false)
   const [requires2FA, setRequires2FA] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -39,6 +43,9 @@ export default function LoginPage() {
   })
 
   const onSubmit = async (data: LoginFormData) => {
+    console.log("🔵 LoginPage onSubmit called with email:", data.email)
+    console.log("🔵 Calling authApi.login() - should POST to /v1/auth/login")
+
     setIsLoading(true)
     try {
       const response = await authApi.login(data)

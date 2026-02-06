@@ -33,6 +33,10 @@ const registerSchema = z.object({
 type RegisterFormData = z.infer<typeof registerSchema>
 
 export default function RegisterPage() {
+  // Debug: Confirm this is the REGISTER page
+  console.log("🔴 RegisterPage component rendered - This is the REGISTER page")
+  console.log("🔴 authApi.register endpoint:", "/v1/auth/register")
+
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -52,6 +56,9 @@ export default function RegisterPage() {
   })
 
   const onSubmit = async (data: RegisterFormData) => {
+    console.log("🔴 RegisterPage onSubmit called with email:", data.email)
+    console.log("🔴 Calling authApi.register() - should POST to /v1/auth/register")
+
     setIsLoading(true)
     try {
       await authApi.register({
