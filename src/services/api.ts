@@ -149,6 +149,8 @@ export const walletApi = {
     api.post(`/v1/wallets/${walletId}/sync`),
   toggleTrading: (walletId: string, enabled: boolean) =>
     api.patch(`/v1/wallets/${walletId}/trading`, { enabled }),
+  transferUsd: (walletId: string, amount: number, toPerp: boolean = true) =>
+    api.post(`/v1/wallets/${walletId}/transfer`, { amount, to_perp: toPerp }),
   disconnectWallet: (walletId: string) =>
     api.delete(`/v1/wallets/${walletId}`),
 }
