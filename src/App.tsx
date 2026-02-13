@@ -38,6 +38,9 @@ import { AnalyticsPage } from "@/pages/analytics"
 // Affiliate
 import { AffiliatePage } from "@/pages/affiliate"
 
+// Notifications
+import { NotificationsPage } from "@/pages/notifications"
+
 // Settings
 import { SettingsPage, RiskManagementPage } from "@/pages/settings"
 
@@ -143,7 +146,7 @@ function App() {
             <Route path="/subscription/cancel" element={<SubscriptionCancelPage />} />
             <Route path="/affiliate" element={<AffiliatePage />} />
             <Route path="/risk-management" element={<RiskManagementPage />} />
-            <Route path="/notifications" element={<div className="p-6">Notifications coming soon</div>} />
+            <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
 

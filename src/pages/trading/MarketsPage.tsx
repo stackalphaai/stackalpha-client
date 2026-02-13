@@ -141,7 +141,48 @@ export default function MarketsPage() {
           <CardDescription>Real-time prices and 24h statistics</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Mobile Card View */}
+          <div className="md:hidden divide-y">
+            {filteredMarkets.map((market) => (
+              <div key={market.symbol} className="p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                      {market.symbol.slice(0, 2)}
+                    </div>
+                    <span className="font-medium">{market.symbol}</span>
+                  </div>
+                  <Badge
+                    variant={market.price_change_percent_24h >= 0 ? "long" : "short"}
+                    className="font-medium"
+                  >
+                    {market.price_change_percent_24h >= 0 ? "+" : ""}
+                    {market.price_change_percent_24h.toFixed(2)}%
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Mark Price</p>
+                    <p className="font-medium">${market.mark_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Volume 24h</p>
+                    <p className="font-medium">${formatNumber(market.volume_24h)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">24h High</p>
+                    <p className="font-medium">${market.high_24h.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">24h Low</p>
+                    <p className="font-medium">${market.low_24h.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Desktop Table */}
+          <div className="overflow-x-auto hidden md:block">
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/50">

@@ -9,6 +9,7 @@ import {
   Clock,
   Target,
   ShieldAlert,
+  Crown,
 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useAuthStore } from "@/stores/auth"
 import {
   Select,
   SelectContent,
@@ -27,6 +29,7 @@ import { tradingApi } from "@/services/api"
 import type { Signal } from "@/types"
 
 export default function SignalsPage() {
+  const { user } = useAuthStore()
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(true)
   const [signals, setSignals] = useState<Signal[]>([])
@@ -110,10 +113,36 @@ export default function SignalsPage() {
       animate={{ opacity: 1 }}
       className="space-y-6"
     >
+      {/* Upgrade Banner */}
+      {!user?.has_active_subscription && (
+        <Card className="bg-gradient-to-r from-primary/20 via-primary/10 to-transparent border-primary/20">
+          <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                <Crown className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Upgrade to Pro for unlimited signals</p>
+                <p className="text-xs text-muted-foreground">Get real-time AI-powered trading opportunities</p>
+              </div>
+            </div>
+            <Button variant="gradient" size="sm" onClick={() => navigate("/subscription")}>
+              Upgrade
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Trading Signals</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">Trading Signals</h1>
+            <Badge variant="default" className="bg-primary text-xs">
+              <Crown className="h-3 w-3 mr-1" />
+              PRO
+            </Badge>
+          </div>
           <p className="text-muted-foreground">AI-generated trading opportunities</p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -216,7 +245,7 @@ export default function SignalsPage() {
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       <span>
-                        {new Date(signal.created_at).toLocaleDateString()}
+                        {new Date(signal.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
                       </span>
                     </div>
                     <span>

@@ -10,6 +10,8 @@ import {
   Activity,
   ArrowUpRight,
   ArrowDownRight,
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react"
 import {
   AreaChart,
@@ -49,72 +51,82 @@ export default function DashboardPage() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(true)
+  const [hasError, setHasError] = useState(false)
   const [analytics, setAnalytics] = useState<TradeAnalytics | null>(null)
   const [dailyPnL, setDailyPnL] = useState<DailyPnL[]>([])
   const [activeSignals, setActiveSignals] = useState<Signal[]>([])
   const [openTrades, setOpenTrades] = useState<Trade[]>([])
   const [totalBalance, setTotalBalance] = useState<number>(0)
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const [analyticsRes, pnlRes, signalsRes, tradesRes, walletsRes] = await Promise.allSettled([
-          analyticsApi.getTradeAnalytics("30d"),
-          analyticsApi.getDailyPnL(30),
-          tradingApi.getActiveSignals(),
-          tradingApi.getOpenTrades(),
-          walletApi.getWallets(),
-        ])
+  const fetchDashboardData = async () => {
+    setHasError(false)
+    try {
+      const [analyticsRes, pnlRes, signalsRes, tradesRes, walletsRes] = await Promise.allSettled([
+        analyticsApi.getTradeAnalytics("30d"),
+        analyticsApi.getDailyPnL(30),
+        tradingApi.getActiveSignals(),
+        tradingApi.getOpenTrades(),
+        walletApi.getWallets(),
+      ])
 
-        if (analyticsRes.status === "fulfilled") setAnalytics(analyticsRes.value.data)
-        if (pnlRes.status === "fulfilled") setDailyPnL(pnlRes.value.data)
-        if (signalsRes.status === "fulfilled") setActiveSignals(signalsRes.value.data.slice(0, 5))
-        if (tradesRes.status === "fulfilled") setOpenTrades(tradesRes.value.data.slice(0, 5))
+      const allRejected = [analyticsRes, pnlRes, signalsRes, tradesRes, walletsRes].every(
+        (r) => r.status === "rejected"
+      )
+      if (allRejected) setHasError(true)
 
-        if (walletsRes.status === "fulfilled") {
-          const balance = walletsRes.value.data.reduce(
-            (sum: number, w: { balance_usd: number | null }) => sum + (w.balance_usd || 0),
-            0
-          )
-          setTotalBalance(balance)
-        }
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error)
-      } finally {
-        setIsLoading(false)
+      if (analyticsRes.status === "fulfilled") setAnalytics(analyticsRes.value.data)
+      if (pnlRes.status === "fulfilled") setDailyPnL(pnlRes.value.data)
+      if (signalsRes.status === "fulfilled") setActiveSignals(signalsRes.value.data.slice(0, 5))
+      if (tradesRes.status === "fulfilled") setOpenTrades(tradesRes.value.data.slice(0, 5))
+
+      if (walletsRes.status === "fulfilled") {
+        const balance = walletsRes.value.data.reduce(
+          (sum: number, w: { balance_usd: number | null }) => sum + (w.balance_usd || 0),
+          0
+        )
+        setTotalBalance(balance)
       }
+    } catch {
+      setHasError(true)
+    } finally {
+      setIsLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchDashboardData()
   }, [])
+
+  const winTrend: "up" | "down" = analytics && analytics.win_rate > 50 ? "up" : "down"
+  const pnlTrend: "up" | "down" | "neutral" = analytics && analytics.total_pnl > 0 ? "up" : analytics && analytics.total_pnl < 0 ? "down" : "neutral"
 
   const stats = [
     {
       title: "Total Balance",
-      value: `$${totalBalance.toLocaleString()}`,
-      change: "+12.5%",
-      trend: "up",
+      value: `$${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      change: totalBalance > 0 ? "Connected" : "No wallets",
+      trend: (totalBalance > 0 ? "up" : "neutral") as "up" | "down" | "neutral",
       icon: Wallet,
     },
     {
       title: "Active Signals",
       value: activeSignals.length.toString(),
-      change: "New today",
-      trend: "neutral",
+      change: activeSignals.length > 0 ? "Live now" : "None active",
+      trend: (activeSignals.length > 0 ? "up" : "neutral") as "up" | "down" | "neutral",
       icon: Zap,
     },
     {
       title: "Win Rate",
       value: analytics ? `${analytics.win_rate.toFixed(1)}%` : "0%",
       change: analytics && analytics.win_rate > 50 ? "Above avg" : "Below avg",
-      trend: analytics && analytics.win_rate > 50 ? "up" : "down",
+      trend: winTrend,
       icon: Target,
     },
     {
       title: "Total P&L",
-      value: analytics ? `$${analytics.total_pnl.toLocaleString()}` : "$0",
-      change: analytics && analytics.total_pnl > 0 ? "Profit" : "Loss",
-      trend: analytics && analytics.total_pnl > 0 ? "up" : "down",
+      value: analytics ? `$${analytics.total_pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "$0.00",
+      change: analytics && analytics.total_pnl > 0 ? "Profit" : analytics && analytics.total_pnl < 0 ? "Loss" : "No trades",
+      trend: pnlTrend,
       icon: Activity,
     },
   ]
@@ -155,6 +167,27 @@ export default function DashboardPage() {
       animate="visible"
       className="space-y-6"
     >
+      {/* Error Banner */}
+      {hasError && (
+        <motion.div variants={itemVariants}>
+          <Card className="border-destructive/50 bg-destructive/5">
+            <CardContent className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-destructive" />
+                <div>
+                  <p className="font-medium text-sm">Failed to load some data</p>
+                  <p className="text-xs text-muted-foreground">Some sections may be showing stale or empty data</p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" onClick={fetchDashboardData}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Welcome Banner */}
       {!user?.has_active_subscription && (
         <motion.div variants={itemVariants}>
@@ -357,48 +390,35 @@ export default function DashboardPage() {
                   No open trades at the moment
                 </p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Symbol</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Direction</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Entry</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Size</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">P&L</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {openTrades.map((trade) => (
-                        <tr
-                          key={trade.id}
-                          className="border-b last:border-0 hover:bg-muted/50 transition-colors cursor-pointer"
-                          onClick={() => navigate(`/trades/${trade.id}`)}
+                <div className="space-y-3">
+                  {openTrades.map((trade) => (
+                    <div
+                      key={trade.id}
+                      className="p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/trades/${trade.id}`)}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{trade.symbol}</span>
+                          <Badge variant={trade.direction === "long" ? "long" : "short"} className="text-xs">
+                            {trade.direction.toUpperCase()}
+                          </Badge>
+                        </div>
+                        <span
+                          className={`font-medium text-sm ${
+                            (trade.unrealized_pnl || 0) >= 0 ? "text-green-500" : "text-red-500"
+                          }`}
                         >
-                          <td className="py-3 px-4 font-medium">{trade.symbol}</td>
-                          <td className="py-3 px-4">
-                            <Badge variant={trade.direction === "long" ? "long" : "short"}>
-                              {trade.direction.toUpperCase()}
-                            </Badge>
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            ${trade.entry_price?.toLocaleString() || "-"}
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            ${trade.position_size_usd.toLocaleString()}
-                          </td>
-                          <td
-                            className={`py-3 px-4 text-right font-medium ${
-                              (trade.unrealized_pnl || 0) >= 0 ? "text-green-500" : "text-red-500"
-                            }`}
-                          >
-                            {(trade.unrealized_pnl || 0) >= 0 ? "+" : ""}
-                            ${(trade.unrealized_pnl || 0).toFixed(2)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          {(trade.unrealized_pnl || 0) >= 0 ? "+" : ""}
+                          ${(trade.unrealized_pnl || 0).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>Entry: ${trade.entry_price?.toLocaleString() || "-"}</span>
+                        <span>Size: ${trade.position_size_usd.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>

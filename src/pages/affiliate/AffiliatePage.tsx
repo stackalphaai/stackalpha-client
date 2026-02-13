@@ -290,14 +290,26 @@ export default function AffiliatePage() {
           <h1 className="text-2xl font-bold">Affiliate Dashboard</h1>
           <p className="text-muted-foreground">Track your referrals and earnings</p>
         </div>
-        <Button
-          variant="gradient"
-          onClick={() => setShowPayoutDialog(true)}
-          disabled={affiliate.pending_earnings < 50}
-        >
-          <CreditCard className="h-4 w-4 mr-2" />
-          Request Payout
-        </Button>
+        <div className="text-right">
+          <Button
+            variant="gradient"
+            onClick={() => setShowPayoutDialog(true)}
+            disabled={affiliate.pending_earnings < 50}
+          >
+            <CreditCard className="h-4 w-4 mr-2" />
+            Request Payout
+          </Button>
+          {!affiliate.payout_address && (
+            <p className="text-xs text-destructive mt-1">
+              Set a payout address first in the payout dialog
+            </p>
+          )}
+          {affiliate.pending_earnings < 50 && affiliate.pending_earnings > 0 && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Minimum payout: $50.00
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Referral Link */}
@@ -375,37 +387,59 @@ export default function AffiliatePage() {
                   No referrals yet. Share your link to start earning!
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b bg-muted/50">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">User</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Joined</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {referrals.map((referral) => (
-                        <tr key={referral.id} className="border-b last:border-0">
-                          <td className="py-3 px-4">
-                            <div>
-                              <p className="font-medium">{referral.full_name || "Anonymous"}</p>
-                              <p className="text-sm text-muted-foreground">{referral.email}</p>
-                            </div>
-                          </td>
-                          <td className="py-3 px-4 text-muted-foreground">
-                            {new Date(referral.created_at).toLocaleDateString()}
-                          </td>
-                          <td className="py-3 px-4">
-                            <Badge variant={referral.has_active_subscription ? "success" : "secondary"}>
-                              {referral.has_active_subscription ? "Subscribed" : "Free"}
-                            </Badge>
-                          </td>
+                <>
+                  {/* Mobile Card View */}
+                  <div className="md:hidden divide-y">
+                    {referrals.map((referral) => (
+                      <div key={referral.id} className="p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{referral.full_name || "Anonymous"}</p>
+                            <p className="text-sm text-muted-foreground">{referral.email}</p>
+                          </div>
+                          <Badge variant={referral.has_active_subscription ? "success" : "secondary"}>
+                            {referral.has_active_subscription ? "Subscribed" : "Free"}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Joined {new Date(referral.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Desktop Table */}
+                  <div className="overflow-x-auto hidden md:block">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b bg-muted/50">
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">User</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Joined</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {referrals.map((referral) => (
+                          <tr key={referral.id} className="border-b last:border-0">
+                            <td className="py-3 px-4">
+                              <div>
+                                <p className="font-medium">{referral.full_name || "Anonymous"}</p>
+                                <p className="text-sm text-muted-foreground">{referral.email}</p>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-muted-foreground">
+                              {new Date(referral.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                            </td>
+                            <td className="py-3 px-4">
+                              <Badge variant={referral.has_active_subscription ? "success" : "secondary"}>
+                                {referral.has_active_subscription ? "Subscribed" : "Free"}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -419,36 +453,58 @@ export default function AffiliatePage() {
                   No commissions yet
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b bg-muted/50">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Date</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Source</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Amount</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {commissions.map((commission) => (
-                        <tr key={commission.id} className="border-b last:border-0">
-                          <td className="py-3 px-4 text-muted-foreground">
-                            {new Date(commission.created_at).toLocaleDateString()}
-                          </td>
-                          <td className="py-3 px-4">{commission.source}</td>
-                          <td className="py-3 px-4 text-right font-medium text-green-500">
-                            +${commission.amount.toFixed(2)}
-                          </td>
-                          <td className="py-3 px-4">
-                            <Badge variant={commission.status === "paid" ? "success" : "warning"}>
-                              {commission.status}
-                            </Badge>
-                          </td>
+                <>
+                  {/* Mobile Card View */}
+                  <div className="md:hidden divide-y">
+                    {commissions.map((commission) => (
+                      <div key={commission.id} className="p-4">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-medium">{commission.source}</span>
+                          <span className="font-medium text-green-500">+${commission.amount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(commission.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                          </span>
+                          <Badge variant={commission.status === "paid" ? "success" : "warning"} className="text-xs">
+                            {commission.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Desktop Table */}
+                  <div className="overflow-x-auto hidden md:block">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b bg-muted/50">
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Date</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Source</th>
+                          <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Amount</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {commissions.map((commission) => (
+                          <tr key={commission.id} className="border-b last:border-0">
+                            <td className="py-3 px-4 text-muted-foreground">
+                              {new Date(commission.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                            </td>
+                            <td className="py-3 px-4">{commission.source}</td>
+                            <td className="py-3 px-4 text-right font-medium text-green-500">
+                              +${commission.amount.toFixed(2)}
+                            </td>
+                            <td className="py-3 px-4">
+                              <Badge variant={commission.status === "paid" ? "success" : "warning"}>
+                                {commission.status}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -462,50 +518,83 @@ export default function AffiliatePage() {
                   No payouts yet
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b bg-muted/50">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Date</th>
-                        <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Amount</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Transaction</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {payouts.map((payout) => (
-                        <tr key={payout.id} className="border-b last:border-0">
-                          <td className="py-3 px-4 text-muted-foreground">
-                            {new Date(payout.created_at).toLocaleDateString()}
-                          </td>
-                          <td className="py-3 px-4 text-right font-medium">
-                            ${payout.amount.toFixed(2)}
-                          </td>
-                          <td className="py-3 px-4">
-                            <Badge
-                              variant={
-                                payout.status === "completed"
-                                  ? "success"
-                                  : payout.status === "pending"
-                                  ? "warning"
-                                  : "destructive"
-                              }
-                            >
-                              {payout.status}
-                            </Badge>
-                          </td>
-                          <td className="py-3 px-4">
-                            {payout.tx_hash ? (
-                              <code className="text-xs">{payout.tx_hash.slice(0, 16)}...</code>
-                            ) : (
-                              "-"
-                            )}
-                          </td>
+                <>
+                  {/* Mobile Card View */}
+                  <div className="md:hidden divide-y">
+                    {payouts.map((payout) => (
+                      <div key={payout.id} className="p-4">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-medium">${payout.amount.toFixed(2)}</span>
+                          <Badge
+                            variant={
+                              payout.status === "completed"
+                                ? "success"
+                                : payout.status === "pending"
+                                ? "warning"
+                                : "destructive"
+                            }
+                            className="text-xs"
+                          >
+                            {payout.status}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>
+                            {new Date(payout.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                          </span>
+                          {payout.tx_hash && (
+                            <code>{payout.tx_hash.slice(0, 12)}...</code>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Desktop Table */}
+                  <div className="overflow-x-auto hidden md:block">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b bg-muted/50">
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Date</th>
+                          <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Amount</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Transaction</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {payouts.map((payout) => (
+                          <tr key={payout.id} className="border-b last:border-0">
+                            <td className="py-3 px-4 text-muted-foreground">
+                              {new Date(payout.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                            </td>
+                            <td className="py-3 px-4 text-right font-medium">
+                              ${payout.amount.toFixed(2)}
+                            </td>
+                            <td className="py-3 px-4">
+                              <Badge
+                                variant={
+                                  payout.status === "completed"
+                                    ? "success"
+                                    : payout.status === "pending"
+                                    ? "warning"
+                                    : "destructive"
+                                }
+                              >
+                                {payout.status}
+                              </Badge>
+                            </td>
+                            <td className="py-3 px-4">
+                              {payout.tx_hash ? (
+                                <code className="text-xs">{payout.tx_hash.slice(0, 16)}...</code>
+                              ) : (
+                                "-"
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>

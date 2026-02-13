@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Copy,
   Smartphone,
+  Download,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -97,7 +98,7 @@ export default function SettingsPage() {
     register: registerProfile,
     handleSubmit: handleProfileSubmit,
     reset: resetProfile,
-    formState: { errors: profileErrors, isSubmitting: isProfileSubmitting },
+    formState: { errors: profileErrors, isSubmitting: isProfileSubmitting, isDirty: isProfileDirty },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -110,7 +111,7 @@ export default function SettingsPage() {
     register: registerPassword,
     handleSubmit: handlePasswordSubmit,
     reset: resetPassword,
-    formState: { errors: passwordErrors, isSubmitting: isPasswordSubmitting },
+    formState: { errors: passwordErrors, isSubmitting: isPasswordSubmitting, isDirty: isPasswordDirty },
   } = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
   })
@@ -256,7 +257,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="profile">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
           <TabsTrigger value="profile">
             <User className="h-4 w-4 mr-2" />
             Profile
@@ -323,7 +324,10 @@ export default function SettingsPage() {
                   )}
                 </div>
 
-                <Button type="submit" disabled={isProfileSubmitting}>
+                {isProfileDirty && (
+                  <p className="text-xs text-amber-500">You have unsaved changes</p>
+                )}
+                <Button type="submit" disabled={isProfileSubmitting || !isProfileDirty}>
                   {isProfileSubmitting ? <Spinner size="sm" className="mr-2" /> : null}
                   Save Changes
                 </Button>
@@ -426,7 +430,10 @@ export default function SettingsPage() {
                   )}
                 </div>
 
-                <Button type="submit" disabled={isPasswordSubmitting}>
+                {isPasswordDirty && (
+                  <p className="text-xs text-amber-500">You have unsaved changes</p>
+                )}
+                <Button type="submit" disabled={isPasswordSubmitting || !isPasswordDirty}>
                   {isPasswordSubmitting ? <Spinner size="sm" className="mr-2" /> : null}
                   Change Password
                 </Button>
@@ -638,8 +645,22 @@ export default function SettingsPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             {totpQR && (
-              <div className="flex justify-center">
+              <div className="flex flex-col items-center gap-2">
                 <img src={totpQR} alt="2FA QR Code" className="h-48 w-48" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                    const link = document.createElement("a")
+                    link.href = totpQR
+                    link.download = "stackalpha-2fa-qr.png"
+                    link.click()
+                  }}
+                >
+                  <Download className="h-3 w-3 mr-1" />
+                  Save QR Code
+                </Button>
               </div>
             )}
             <div className="text-center">

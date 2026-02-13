@@ -172,7 +172,7 @@ export default function SubscriptionPage() {
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {currentSubscription.expires_at
-                      ? `Expires: ${new Date(currentSubscription.expires_at).toLocaleDateString()}`
+                      ? `Expires: ${new Date(currentSubscription.expires_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}`
                       : "Pending payment"}
                   </p>
                 </div>
@@ -389,7 +389,21 @@ export default function SubscriptionPage() {
               Are you sure you want to cancel your subscription?
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
+          <div className="py-4 space-y-4">
+            {currentSubscription?.expires_at && (
+              <div className="p-3 rounded-lg bg-muted/50 text-sm">
+                <p className="text-muted-foreground">
+                  Your access will remain active until{" "}
+                  <span className="font-medium text-foreground">
+                    {new Date(currentSubscription.expires_at).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </span>
+                </p>
+              </div>
+            )}
             <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
               <div className="flex items-start gap-3">
                 <X className="h-5 w-5 text-destructive shrink-0 mt-0.5" />

@@ -85,7 +85,7 @@ export function SignalCard({ signal, onClick, onExecute, delay = 0 }: SignalCard
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              <span>{new Date(signal.created_at).toLocaleDateString()}</span>
+              <span>{new Date(signal.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</span>
             </div>
             <span>R:R {signal.risk_reward_ratio.toFixed(2)}</span>
           </div>
