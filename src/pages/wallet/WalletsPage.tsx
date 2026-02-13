@@ -11,6 +11,11 @@ import {
   CheckCircle,
   AlertCircle,
   Loader2,
+  Shield,
+  Eye,
+  EyeOff,
+  Download,
+  AlertTriangle,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -34,6 +39,11 @@ import { showSuccessToast, showErrorToast, showWarningToast } from "@/lib/api-er
 import { WalletOnboardingFlow } from "./WalletOnboardingFlow"
 import type { Wallet as WalletType } from "@/types"
 
+interface GeneratedWallet {
+  address: string
+  private_key: string
+}
+
 export default function WalletsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [wallets, setWallets] = useState<WalletType[]>([])
@@ -42,6 +52,9 @@ export default function WalletsPage() {
   const [isConnecting, setIsConnecting] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [syncingWalletId, setSyncingWalletId] = useState<string | null>(null)
+  const [generatedWallet, setGeneratedWallet] = useState<GeneratedWallet | null>(null)
+  const [showKeyRevealed, setShowKeyRevealed] = useState(false)
+  const [keySavedConfirmed, setKeySavedConfirmed] = useState(false)
 
   const fetchWallets = async () => {
     try {
@@ -81,14 +94,58 @@ export default function WalletsPage() {
   const handleGenerateApiWallet = async () => {
     setIsGenerating(true)
     try {
-      await walletApi.generateApiWallet()
-      showSuccessToast("API wallet generated successfully!")
+      const response = await walletApi.generateApiWallet()
+      setGeneratedWallet(response.data)
+      setShowConnectDialog(false)
+      setShowKeyRevealed(false)
+      setKeySavedConfirmed(false)
       fetchWallets()
     } catch (error) {
       showErrorToast(error, "Failed to generate API wallet")
     } finally {
       setIsGenerating(false)
     }
+  }
+
+  const handleDownloadKey = () => {
+    if (!generatedWallet) return
+    const content = [
+      "=== StackAlpha API Wallet - KEEP THIS FILE SECURE ===",
+      "",
+      `Wallet Address: ${generatedWallet.address}`,
+      `Private Key: ${generatedWallet.private_key}`,
+      "",
+      "IMPORTANT:",
+      "- This private key gives FULL access to this wallet",
+      "- Never share this key with anyone",
+      "- Store this file in a secure location (password manager, encrypted drive)",
+      "- Delete this file after saving the key somewhere secure",
+      "- You can import this key into MetaMask or any Ethereum wallet to access your funds",
+      "",
+      `Generated: ${new Date().toISOString()}`,
+    ].join("\n")
+
+    const blob = new Blob([content], { type: "text/plain" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `stackalpha-wallet-${generatedWallet.address.slice(0, 8)}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    toast.success("Wallet key file downloaded")
+  }
+
+  const handleCloseSecretDialog = () => {
+    if (!keySavedConfirmed) {
+      if (!confirm("Are you sure? You will NOT be able to see this private key again. Make sure you have saved it.")) {
+        return
+      }
+    }
+    setGeneratedWallet(null)
+    setShowKeyRevealed(false)
+    setKeySavedConfirmed(false)
   }
 
   const handleSyncWallet = async (walletId: string) => {
@@ -391,6 +448,164 @@ export default function WalletsPage() {
           )}
         </div>
       )}
+
+      {/* Generated Wallet Secret Key Dialog */}
+      <Dialog open={!!generatedWallet} onOpenChange={(open) => { if (!open) handleCloseSecretDialog() }}>
+        <DialogContent className="sm:max-w-lg" onInteractOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="h-10 w-10 rounded-xl bg-green-500/20 flex items-center justify-center">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              </div>
+              <div>
+                <DialogTitle>Wallet Generated Successfully</DialogTitle>
+                <DialogDescription>
+                  Save your private key now — it will not be shown again
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-5">
+            {/* Critical Warning */}
+            <div className="flex gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+              <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-semibold text-destructive">This is the only time your private key will be displayed.</p>
+                <p className="text-muted-foreground mt-1">
+                  If you lose it, you will lose access to any funds in this wallet.
+                  StackAlpha cannot recover it for you.
+                </p>
+              </div>
+            </div>
+
+            {/* Wallet Address */}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Wallet Address</Label>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 p-2.5 rounded-lg bg-muted font-mono text-sm break-all">
+                  {generatedWallet?.address}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={() => {
+                    if (generatedWallet) {
+                      navigator.clipboard.writeText(generatedWallet.address)
+                      toast.success("Address copied")
+                    }
+                  }}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Private Key */}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Private Key (Secret)</Label>
+              <div className="relative">
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 p-2.5 rounded-lg bg-muted font-mono text-sm break-all select-all">
+                    {showKeyRevealed
+                      ? generatedWallet?.private_key
+                      : "\u2022".repeat(48)}
+                  </code>
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowKeyRevealed(!showKeyRevealed)}
+                    >
+                      {showKeyRevealed ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        if (generatedWallet) {
+                          navigator.clipboard.writeText(generatedWallet.private_key)
+                          toast.success("Private key copied to clipboard")
+                        }
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Download Button */}
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={handleDownloadKey}
+            >
+              <Download className="h-4 w-4" />
+              Download Key File
+            </Button>
+
+            {/* Security Info */}
+            <div className="space-y-3 p-4 rounded-lg bg-muted/50 border">
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold">Security & Custody Information</span>
+              </div>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
+                  <span><strong>Your funds, your control.</strong> StackAlpha cannot withdraw or transfer your funds. The private key is only used to place and close trades on Hyperliquid.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
+                  <span><strong>Backup &amp; recovery.</strong> You can import this private key into MetaMask or any Ethereum-compatible wallet at any time to access your funds directly.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
+                  <span><strong>Fund your wallet.</strong> Send USDC on the Arbitrum network to the wallet address above to start trading.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <AlertTriangle className="h-3.5 w-3.5 text-yellow-500 mt-0.5 shrink-0" />
+                  <span><strong>Never share your private key</strong> with anyone. Anyone who has it can access your wallet funds.</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Next Steps */}
+            <div className="space-y-2 p-4 rounded-lg border border-primary/20 bg-primary/5">
+              <span className="text-sm font-semibold">Next Steps</span>
+              <ol className="space-y-1.5 text-sm text-muted-foreground list-decimal list-inside">
+                <li>Save your private key in a secure location (password manager recommended)</li>
+                <li>Send USDC on Arbitrum to your new wallet address</li>
+                <li>Once funded, StackAlpha will automatically execute AI-powered trades for you</li>
+              </ol>
+            </div>
+
+            {/* Confirmation + Close */}
+            <div className="space-y-3 pt-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={keySavedConfirmed}
+                  onChange={(e) => setKeySavedConfirmed(e.target.checked)}
+                  className="rounded border-muted-foreground/30"
+                />
+                <span className="text-sm">I have saved my private key in a secure location</span>
+              </label>
+              <Button
+                variant="gradient"
+                className="w-full"
+                disabled={!keySavedConfirmed}
+                onClick={handleCloseSecretDialog}
+              >
+                I've Saved My Key — Continue
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   )
 }
