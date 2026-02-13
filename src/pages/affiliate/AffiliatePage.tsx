@@ -40,26 +40,32 @@ import { showSuccessToast, showErrorToast } from "@/lib/api-error"
 import type { Affiliate } from "@/types"
 
 interface Referral {
-  id: number
-  email: string
-  full_name: string
+  id: string
+  referred_user_email: string
+  referred_user_full_name: string | null
+  referred_user_has_active_subscription: boolean
+  is_converted: boolean
+  converted_at: string | null
   created_at: string
-  has_active_subscription: boolean
 }
 
 interface Commission {
-  id: number
+  id: string
   amount: number
+  commission_rate: number
+  original_amount: number
   status: string
   source: string
+  is_paid: boolean
+  paid_at: string | null
   created_at: string
 }
 
 interface Payout {
-  id: number
+  id: string
   amount: number
   status: string
-  tx_hash: string | null
+  transaction_hash: string | null
   created_at: string
 }
 
@@ -394,11 +400,13 @@ export default function AffiliatePage() {
                       <div key={referral.id} className="p-4 space-y-2">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="font-medium">{referral.full_name || "Anonymous"}</p>
-                            <p className="text-sm text-muted-foreground">{referral.email}</p>
+                            <p className="font-medium">{referral.referred_user_full_name || referral.referred_user_email}</p>
+                            {referral.referred_user_full_name && (
+                              <p className="text-sm text-muted-foreground">{referral.referred_user_email}</p>
+                            )}
                           </div>
-                          <Badge variant={referral.has_active_subscription ? "success" : "secondary"}>
-                            {referral.has_active_subscription ? "Subscribed" : "Free"}
+                          <Badge variant={referral.referred_user_has_active_subscription ? "success" : "secondary"}>
+                            {referral.referred_user_has_active_subscription ? "Subscribed" : "Free"}
                           </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground">
@@ -422,16 +430,18 @@ export default function AffiliatePage() {
                           <tr key={referral.id} className="border-b last:border-0">
                             <td className="py-3 px-4">
                               <div>
-                                <p className="font-medium">{referral.full_name || "Anonymous"}</p>
-                                <p className="text-sm text-muted-foreground">{referral.email}</p>
+                                <p className="font-medium">{referral.referred_user_full_name || referral.referred_user_email}</p>
+                                {referral.referred_user_full_name && (
+                                  <p className="text-sm text-muted-foreground">{referral.referred_user_email}</p>
+                                )}
                               </div>
                             </td>
                             <td className="py-3 px-4 text-muted-foreground">
                               {new Date(referral.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
                             </td>
                             <td className="py-3 px-4">
-                              <Badge variant={referral.has_active_subscription ? "success" : "secondary"}>
-                                {referral.has_active_subscription ? "Subscribed" : "Free"}
+                              <Badge variant={referral.referred_user_has_active_subscription ? "success" : "secondary"}>
+                                {referral.referred_user_has_active_subscription ? "Subscribed" : "Free"}
                               </Badge>
                             </td>
                           </tr>
@@ -542,8 +552,8 @@ export default function AffiliatePage() {
                           <span>
                             {new Date(payout.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
                           </span>
-                          {payout.tx_hash && (
-                            <code>{payout.tx_hash.slice(0, 12)}...</code>
+                          {payout.transaction_hash && (
+                            <code>{payout.transaction_hash.slice(0, 12)}...</code>
                           )}
                         </div>
                       </div>
@@ -583,8 +593,8 @@ export default function AffiliatePage() {
                               </Badge>
                             </td>
                             <td className="py-3 px-4">
-                              {payout.tx_hash ? (
-                                <code className="text-xs">{payout.tx_hash.slice(0, 16)}...</code>
+                              {payout.transaction_hash ? (
+                                <code className="text-xs">{payout.transaction_hash.slice(0, 16)}...</code>
                               ) : (
                                 "-"
                               )}
