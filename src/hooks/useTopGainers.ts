@@ -30,6 +30,11 @@ interface UseTopGainersOptions {
 
 function getWsBaseUrl(): string {
   if (import.meta.env.VITE_WS_URL) return import.meta.env.VITE_WS_URL
+  // Derive WebSocket URL from the API base URL so it points to the backend server
+  const apiUrl = import.meta.env.VITE_API_URL
+  if (apiUrl) {
+    return apiUrl.replace(/^https:/, "wss:").replace(/^http:/, "ws:")
+  }
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
   return `${protocol}//${window.location.host}/api`
 }

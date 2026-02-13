@@ -58,7 +58,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [analyticsRes, pnlRes, signalsRes, tradesRes, walletsRes] = await Promise.all([
+        const [analyticsRes, pnlRes, signalsRes, tradesRes, walletsRes] = await Promise.allSettled([
           analyticsApi.getTradeAnalytics("30d"),
           analyticsApi.getDailyPnL(30),
           tradingApi.getActiveSignals(),
@@ -66,16 +66,18 @@ export default function DashboardPage() {
           walletApi.getWallets(),
         ])
 
-        setAnalytics(analyticsRes.data)
-        setDailyPnL(pnlRes.data)
-        setActiveSignals(signalsRes.data.slice(0, 5))
-        setOpenTrades(tradesRes.data.slice(0, 5))
+        if (analyticsRes.status === "fulfilled") setAnalytics(analyticsRes.value.data)
+        if (pnlRes.status === "fulfilled") setDailyPnL(pnlRes.value.data)
+        if (signalsRes.status === "fulfilled") setActiveSignals(signalsRes.value.data.slice(0, 5))
+        if (tradesRes.status === "fulfilled") setOpenTrades(tradesRes.value.data.slice(0, 5))
 
-        const balance = walletsRes.data.reduce(
-          (sum: number, w: { balance_usd: number | null }) => sum + (w.balance_usd || 0),
-          0
-        )
-        setTotalBalance(balance)
+        if (walletsRes.status === "fulfilled") {
+          const balance = walletsRes.value.data.reduce(
+            (sum: number, w: { balance_usd: number | null }) => sum + (w.balance_usd || 0),
+            0
+          )
+          setTotalBalance(balance)
+        }
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error)
       } finally {
