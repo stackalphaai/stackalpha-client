@@ -55,6 +55,7 @@ export default function WalletsPage() {
   const [generatedWallet, setGeneratedWallet] = useState<GeneratedWallet | null>(null)
   const [showKeyRevealed, setShowKeyRevealed] = useState(false)
   const [keySavedConfirmed, setKeySavedConfirmed] = useState(false)
+  const [showDisconnected, setShowDisconnected] = useState(false)
 
   const fetchWallets = async () => {
     try {
@@ -275,8 +276,11 @@ export default function WalletsPage() {
     }
   }
 
-  const masterWallets = wallets.filter((w) => w.wallet_type === "master")
-  const apiWallets = wallets.filter((w) => w.wallet_type === "api")
+  const activeWallets = wallets.filter((w) => w.status !== "disconnected")
+  const disconnectedWallets = wallets.filter((w) => w.status === "disconnected")
+  const visibleWallets = showDisconnected ? wallets : activeWallets
+  const masterWallets = visibleWallets.filter((w) => w.wallet_type === "master")
+  const apiWallets = visibleWallets.filter((w) => w.wallet_type === "api")
 
   if (isLoading) {
     return (
@@ -493,8 +497,29 @@ export default function WalletsPage() {
       </div>
 
       {/* Wallets */}
-      {wallets.length === 0 ? (
-        <WalletOnboardingFlow onConnectWallet={() => setShowConnectDialog(true)} />
+      {activeWallets.length === 0 ? (
+        <div className="space-y-6">
+          <WalletOnboardingFlow onConnectWallet={() => setShowConnectDialog(true)} />
+          {disconnectedWallets.length > 0 && (
+            <div className="text-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground"
+                onClick={() => setShowDisconnected(!showDisconnected)}
+              >
+                {showDisconnected ? "Hide" : "Show"} {disconnectedWallets.length} disconnected wallet{disconnectedWallets.length > 1 ? "s" : ""}
+              </Button>
+              {showDisconnected && (
+                <div className="grid gap-4 md:grid-cols-2 mt-4 opacity-60">
+                  {disconnectedWallets.map((wallet) => (
+                    <WalletCard key={wallet.id} wallet={wallet} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       ) : (
         <div className="space-y-6">
           {masterWallets.length > 0 && (
@@ -516,6 +541,26 @@ export default function WalletsPage() {
                   <WalletCard key={wallet.id} wallet={wallet} />
                 ))}
               </div>
+            </div>
+          )}
+
+          {disconnectedWallets.length > 0 && (
+            <div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground mb-4"
+                onClick={() => setShowDisconnected(!showDisconnected)}
+              >
+                {showDisconnected ? "Hide" : "Show"} {disconnectedWallets.length} disconnected wallet{disconnectedWallets.length > 1 ? "s" : ""}
+              </Button>
+              {showDisconnected && (
+                <div className="grid gap-4 md:grid-cols-2 opacity-60">
+                  {disconnectedWallets.map((wallet) => (
+                    <WalletCard key={wallet.id} wallet={wallet} />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
