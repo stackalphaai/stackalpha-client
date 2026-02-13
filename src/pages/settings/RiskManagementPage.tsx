@@ -21,12 +21,23 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { riskApi } from "@/services/api"
 import type { RiskSettings, PortfolioMetrics, CircuitBreakerStatus } from "@/types"
 
 export default function RiskManagementPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [showKillSwitchDialog, setShowKillSwitchDialog] = useState(false)
 
   const [settings, setSettings] = useState<RiskSettings | null>(null)
   const [metrics, setMetrics] = useState<PortfolioMetrics | null>(null)
@@ -108,14 +119,9 @@ export default function RiskManagementPage() {
   }
 
   const handleKillSwitch = async () => {
-    const confirmed = window.confirm(
-      "🚨 EMERGENCY KILL SWITCH\n\nThis will immediately:\n- Close all open positions\n- Stop all trading\n\nAre you absolutely sure?"
-    )
-
-    if (!confirmed) return
-
     try {
       await riskApi.activateKillSwitch(true)
+      setShowKillSwitchDialog(false)
       toast.error("Kill switch activated - All trading stopped")
       await fetchData()
     } catch (error) {
@@ -289,7 +295,7 @@ export default function RiskManagementPage() {
                 </Button>
               ) : null}
 
-              <Button variant="destructive" onClick={handleKillSwitch} className="gap-2">
+              <Button variant="destructive" onClick={() => setShowKillSwitchDialog(true)} className="gap-2">
                 <Power className="h-4 w-4" />
                 Kill Switch
               </Button>
@@ -513,6 +519,33 @@ export default function RiskManagementPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Kill Switch Confirmation */}
+      <AlertDialog open={showKillSwitchDialog} onOpenChange={setShowKillSwitchDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Emergency Kill Switch
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span className="block">This will immediately:</span>
+              <span className="block font-medium text-foreground">- Close all open positions</span>
+              <span className="block font-medium text-foreground">- Stop all automated trading</span>
+              <span className="block mt-2">Are you absolutely sure you want to proceed?</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleKillSwitch}
+            >
+              Activate Kill Switch
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   )
 }

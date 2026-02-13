@@ -86,21 +86,20 @@ export default api
 
 // Auth API
 export const authApi = {
-  register: (data: { email: string; password: string; full_name?: string; referral_code?: string }) => {
-    console.log("📡 authApi.register() called - POST to /v1/auth/register")
-    return api.post("/v1/auth/register", data)
-  },
+  register: (data: { email: string; password: string; full_name?: string; referral_code?: string }) =>
+    api.post("/v1/auth/register", data),
 
-  login: (data: { email: string; password: string; totp_code?: string }) => {
-    console.log("📡 authApi.login() called - POST to /v1/auth/login")
-    return api.post("/v1/auth/login", data)
-  },
+  login: (data: { email: string; password: string; totp_code?: string }) =>
+    api.post("/v1/auth/login", data),
 
   refresh: (refreshToken: string) =>
     api.post("/v1/auth/refresh", { refresh_token: refreshToken }),
 
   verifyEmail: (token: string) =>
     api.post("/v1/auth/verify-email", { token }),
+
+  resendVerification: (email: string) =>
+    api.post("/v1/auth/resend-verification", { email }),
 
   forgotPassword: (email: string) =>
     api.post("/v1/auth/forgot-password", { email }),

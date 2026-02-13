@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { motion } from "framer-motion"
-import { Eye, EyeOff, Mail, Lock, User, Gift, Zap } from "lucide-react"
+import { Eye, EyeOff, Mail, Lock, User, Gift, Zap, Check, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,11 +32,14 @@ const registerSchema = z.object({
 
 type RegisterFormData = z.infer<typeof registerSchema>
 
-export default function RegisterPage() {
-  // Debug: Confirm this is the REGISTER page
-  console.log("🔴 RegisterPage component rendered - This is the REGISTER page")
-  console.log("🔴 authApi.register endpoint:", "/v1/auth/register")
+const passwordRequirements = [
+  { label: "At least 8 characters", test: (pw: string) => pw.length >= 8 },
+  { label: "One uppercase letter", test: (pw: string) => /[A-Z]/.test(pw) },
+  { label: "One lowercase letter", test: (pw: string) => /[a-z]/.test(pw) },
+  { label: "One number", test: (pw: string) => /[0-9]/.test(pw) },
+]
 
+export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -47,6 +50,7 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -55,10 +59,9 @@ export default function RegisterPage() {
     },
   })
 
-  const onSubmit = async (data: RegisterFormData) => {
-    console.log("🔴 RegisterPage onSubmit called with email:", data.email)
-    console.log("🔴 Calling authApi.register() - should POST to /v1/auth/register")
+  const passwordValue = watch("password", "")
 
+  const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true)
     try {
       await authApi.register({
@@ -155,8 +158,24 @@ export default function RegisterPage() {
                 error={!!errors.password}
                 {...register("password")}
               />
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
+              {passwordValue.length > 0 && (
+                <div className="space-y-1.5 pt-1">
+                  {passwordRequirements.map((req) => {
+                    const met = req.test(passwordValue)
+                    return (
+                      <div key={req.label} className="flex items-center gap-2 text-xs">
+                        {met ? (
+                          <Check className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                        ) : (
+                          <X className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                        )}
+                        <span className={met ? "text-green-500" : "text-muted-foreground"}>
+                          {req.label}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
               )}
             </div>
 

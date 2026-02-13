@@ -1,16 +1,21 @@
 import { useEffect, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { motion } from "framer-motion"
-import { CheckCircle, XCircle, Loader2, Zap } from "lucide-react"
+import { CheckCircle, XCircle, Loader2, Zap, Mail } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { authApi } from "@/services/api"
+import { showSuccessToast, showErrorToast } from "@/lib/api-error"
 
 type VerificationState = "loading" | "success" | "error"
 
 export default function VerifyEmailPage() {
   const [state, setState] = useState<VerificationState>("loading")
+  const [resendEmail, setResendEmail] = useState("")
+  const [isResending, setIsResending] = useState(false)
+  const [resendSent, setResendSent] = useState(false)
   const [searchParams] = useSearchParams()
   const token = searchParams.get("token")
 
@@ -91,11 +96,57 @@ export default function VerifyEmailPage() {
                 </div>
               </div>
               <h2 className="text-xl font-semibold mb-2 text-destructive">Verification Failed</h2>
-              <p className="text-muted-foreground mb-6">
-                This verification link is invalid or has expired. Please try logging in to receive a new verification email.
+              <p className="text-muted-foreground mb-4">
+                This verification link is invalid or has expired.
               </p>
+
+              {resendSent ? (
+                <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20 mb-4">
+                  <div className="flex items-center gap-2 justify-center text-green-500">
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="text-sm font-medium">Verification email sent!</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Check your inbox and spam folder.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3 mb-4">
+                  <p className="text-sm text-muted-foreground">
+                    Enter your email to receive a new verification link:
+                  </p>
+                  <div className="flex gap-2">
+                    <Input
+                      type="email"
+                      placeholder="your@email.com"
+                      value={resendEmail}
+                      onChange={(e) => setResendEmail(e.target.value)}
+                      icon={<Mail className="h-4 w-4" />}
+                    />
+                    <Button
+                      variant="gradient"
+                      disabled={!resendEmail || isResending}
+                      onClick={async () => {
+                        setIsResending(true)
+                        try {
+                          await authApi.resendVerification(resendEmail)
+                          setResendSent(true)
+                          showSuccessToast("Verification email sent!")
+                        } catch (error) {
+                          showErrorToast(error, "Failed to resend verification email")
+                        } finally {
+                          setIsResending(false)
+                        }
+                      }}
+                    >
+                      {isResending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Resend"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <Link to="/login">
-                <Button variant="gradient" className="w-full">
+                <Button variant="outline" className="w-full">
                   Go to Login
                 </Button>
               </Link>

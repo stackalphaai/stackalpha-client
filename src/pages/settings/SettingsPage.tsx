@@ -34,6 +34,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Spinner } from "@/components/ui/spinner"
 import { authApi, userApi, telegramApi } from "@/services/api"
 import { useAuthStore } from "@/stores/auth"
@@ -75,6 +85,7 @@ export default function SettingsPage() {
   const [disable2FAPassword, setDisable2FAPassword] = useState("")
   const [disable2FACode, setDisable2FACode] = useState("")
   const [isDisabling2FA, setIsDisabling2FA] = useState(false)
+  const [showDisconnectTelegramDialog, setShowDisconnectTelegramDialog] = useState(false)
 
   const [showPassword, setShowPassword] = useState({
     current: false,
@@ -218,11 +229,10 @@ export default function SettingsPage() {
   }
 
   const handleDisconnectTelegram = async () => {
-    if (!confirm("Are you sure you want to disconnect Telegram?")) return
-
     try {
       await telegramApi.disconnect()
       setTelegram(null)
+      setShowDisconnectTelegramDialog(false)
       showSuccessToast("Telegram disconnected")
     } catch (error) {
       showErrorToast(error, "Failed to disconnect Telegram")
@@ -546,7 +556,7 @@ export default function SettingsPage() {
                         </p>
                       </div>
                     </div>
-                    <Button variant="outline" onClick={handleDisconnectTelegram}>
+                    <Button variant="outline" onClick={() => setShowDisconnectTelegramDialog(true)}>
                       Disconnect
                     </Button>
                   </div>
@@ -713,6 +723,27 @@ export default function SettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Disconnect Telegram Confirmation */}
+      <AlertDialog open={showDisconnectTelegramDialog} onOpenChange={setShowDisconnectTelegramDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disconnect Telegram</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to disconnect Telegram? You will stop receiving real-time trading notifications.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDisconnectTelegram}
+            >
+              Disconnect
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   )
 }

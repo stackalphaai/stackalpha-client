@@ -39,7 +39,7 @@ import { AnalyticsPage } from "@/pages/analytics"
 import { AffiliatePage } from "@/pages/affiliate"
 
 // Settings
-import { SettingsPage } from "@/pages/settings"
+import { SettingsPage, RiskManagementPage } from "@/pages/settings"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -142,6 +142,7 @@ function App() {
             <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />
             <Route path="/subscription/cancel" element={<SubscriptionCancelPage />} />
             <Route path="/affiliate" element={<AffiliatePage />} />
+            <Route path="/risk-management" element={<RiskManagementPage />} />
             <Route path="/notifications" element={<div className="p-6">Notifications coming soon</div>} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>

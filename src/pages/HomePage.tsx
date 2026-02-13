@@ -19,7 +19,6 @@ import {
   Check,
   Star,
   ArrowUpRight,
-  Play,
 } from "lucide-react"
 import { Button } from "@/components/ui"
 import { TopGainers } from "@/components/features"
@@ -162,9 +161,11 @@ export function HomePage() {
                   Start Trading Now <Rocket className="w-5 h-5" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="gap-2 text-lg px-8 py-6">
-                <Play className="w-5 h-5" /> Watch Demo
-              </Button>
+              <a href="#how-it-works">
+                <Button size="lg" variant="outline" className="gap-2 text-lg px-8 py-6">
+                  How It Works <ArrowRight className="w-5 h-5" />
+                </Button>
+              </a>
             </motion.div>
 
             {/* Stats Row */}
@@ -173,10 +174,10 @@ export function HomePage() {
               className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto"
             >
               {[
-                { value: "$2.4M+", label: "Trading Volume" },
-                { value: "73%", label: "Win Rate" },
-                { value: "5,000+", label: "Active Traders" },
+                { value: "3+", label: "AI Models" },
+                { value: "150+", label: "Markets Tracked" },
                 { value: "24/7", label: "AI Analysis" },
+                { value: "<1s", label: "Signal Latency" },
               ].map((stat, index) => (
                 <div key={index} className="text-center">
                   <div className="text-3xl sm:text-4xl font-bold gradient-text mb-1">{stat.value}</div>

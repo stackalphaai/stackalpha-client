@@ -14,12 +14,24 @@ import {
   ChevronRight,
   Zap,
   History,
+  Shield,
+  X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { useAuthStore } from "@/stores/auth"
 import { useState } from "react"
 
@@ -30,6 +42,7 @@ const mainNavItems = [
   { icon: TrendingUp, label: "Markets", href: "/markets" },
   { icon: Wallet, label: "Wallets", href: "/wallets" },
   { icon: BarChart3, label: "Analytics", href: "/analytics" },
+  { icon: Shield, label: "Risk Management", href: "/risk-management" },
 ]
 
 const secondaryNavItems = [
@@ -39,8 +52,14 @@ const secondaryNavItems = [
   { icon: Settings, label: "Settings", href: "/settings" },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  mobileOpen?: boolean
+  onMobileClose?: () => void
+}
+
+export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const location = useLocation()
   const { clearAuth } = useAuthStore()
 
@@ -49,149 +68,139 @@ export function Sidebar() {
     window.location.href = "/login"
   }
 
-  return (
-    <TooltipProvider delayDuration={0}>
-      <motion.aside
-        initial={false}
-        animate={{ width: collapsed ? 80 : 280 }}
-        className="fixed left-0 top-0 z-40 h-screen border-r bg-card/50 backdrop-blur-xl flex flex-col"
-      >
-        {/* Logo */}
-        <div className="flex h-16 items-center justify-between px-4 border-b">
-          <AnimatePresence mode="wait">
-            {!collapsed && (
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="flex items-center gap-2"
-              >
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-                <img className="h-5 w-5" src="https://res.cloudinary.com/deioo5lrm/image/upload/v1769925235/stackalpha_qyuyms.png" alt="" />
-                  {/* <Zap className="h-5 w-5 text-white" /> */}
-                </div>
-                <span className="font-bold text-xl bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                  StackAlpha
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          {collapsed && (
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center mx-auto">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
+  const handleNavClick = () => {
+    // Close mobile sidebar on navigation
+    if (onMobileClose) onMobileClose()
+  }
+
+  const renderNavItems = (items: typeof mainNavItems, isMain: boolean) =>
+    items.map((item) => {
+      const isActive = location.pathname === item.href
+      const NavItem = (
+        <NavLink
+          key={item.href}
+          to={item.href}
+          onClick={handleNavClick}
+          className={cn(
+            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+            isActive
+              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
           )}
-        </div>
+        >
+          <item.icon className={cn("h-5 w-5 flex-shrink-0", collapsed && !mobileOpen && "mx-auto")} />
+          {(!collapsed || mobileOpen) && <span>{item.label}</span>}
+          {isActive && (!collapsed || mobileOpen) && isMain && (
+            <motion.div
+              layoutId="activeIndicator"
+              className="ml-auto h-2 w-2 rounded-full bg-white"
+            />
+          )}
+        </NavLink>
+      )
 
-        {/* Navigation */}
-        <ScrollArea className="flex-1 px-3 py-4">
-          <nav className="space-y-1">
-            {mainNavItems.map((item) => {
-              const isActive = location.pathname === item.href
-              const NavItem = (
-                <NavLink
-                  key={item.href}
-                  to={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  )}
-                >
-                  <item.icon className={cn("h-5 w-5", collapsed && "mx-auto")} />
-                  {!collapsed && <span>{item.label}</span>}
-                  {isActive && !collapsed && (
-                    <motion.div
-                      layoutId="activeIndicator"
-                      className="ml-auto h-2 w-2 rounded-full bg-white"
-                    />
-                  )}
-                </NavLink>
-              )
+      if (collapsed && !mobileOpen) {
+        return (
+          <Tooltip key={item.href}>
+            <TooltipTrigger asChild>{NavItem}</TooltipTrigger>
+            <TooltipContent side="right">{item.label}</TooltipContent>
+          </Tooltip>
+        )
+      }
 
-              if (collapsed) {
-                return (
-                  <Tooltip key={item.href}>
-                    <TooltipTrigger asChild>{NavItem}</TooltipTrigger>
-                    <TooltipContent side="right">{item.label}</TooltipContent>
-                  </Tooltip>
-                )
-              }
+      return NavItem
+    })
 
-              return NavItem
-            })}
-          </nav>
-
-          <Separator className="my-4" />
-
-          <nav className="space-y-1">
-            {secondaryNavItems.map((item) => {
-              const isActive = location.pathname === item.href
-              const NavItem = (
-                <NavLink
-                  key={item.href}
-                  to={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  )}
-                >
-                  <item.icon className={cn("h-5 w-5", collapsed && "mx-auto")} />
-                  {!collapsed && <span>{item.label}</span>}
-                </NavLink>
-              )
-
-              if (collapsed) {
-                return (
-                  <Tooltip key={item.href}>
-                    <TooltipTrigger asChild>{NavItem}</TooltipTrigger>
-                    <TooltipContent side="right">{item.label}</TooltipContent>
-                  </Tooltip>
-                )
-              }
-
-              return NavItem
-            })}
-          </nav>
-        </ScrollArea>
-
-        {/* Footer */}
-        <div className="border-t p-3">
-          {collapsed ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-full text-muted-foreground hover:text-destructive"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Logout</TooltipContent>
-            </Tooltip>
-          ) : (
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-muted-foreground hover:text-destructive"
-              onClick={handleLogout}
+  const sidebarContent = (
+    <>
+      {/* Logo */}
+      <div className="flex h-16 items-center justify-between px-4 border-b">
+        <AnimatePresence mode="wait">
+          {(!collapsed || mobileOpen) && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex items-center gap-2"
             >
-              <LogOut className="h-5 w-5 mr-3" />
-              Logout
-            </Button>
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
+                <img className="h-5 w-5" src="https://res.cloudinary.com/deioo5lrm/image/upload/v1769925235/stackalpha_qyuyms.png" alt="" />
+              </div>
+              <span className="font-bold text-xl bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                StackAlpha
+              </span>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
+        {collapsed && !mobileOpen && (
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center mx-auto">
+            <Zap className="h-5 w-5 text-white" />
+          </div>
+        )}
+        {/* Mobile close button */}
+        {mobileOpen && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={onMobileClose}
+            aria-label="Close navigation menu"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        )}
+      </div>
 
-        {/* Collapse Toggle */}
+      {/* Navigation */}
+      <ScrollArea className="flex-1 px-3 py-4">
+        <nav className="space-y-1">
+          {renderNavItems(mainNavItems, true)}
+        </nav>
+
+        <Separator className="my-4" />
+
+        <nav className="space-y-1">
+          {renderNavItems(secondaryNavItems, false)}
+        </nav>
+      </ScrollArea>
+
+      {/* Footer */}
+      <div className="border-t p-3">
+        {collapsed && !mobileOpen ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-full text-muted-foreground hover:text-destructive"
+                onClick={() => setShowLogoutDialog(true)}
+                aria-label="Logout"
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Logout</TooltipContent>
+          </Tooltip>
+        ) : (
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground hover:text-destructive"
+            onClick={() => setShowLogoutDialog(true)}
+          >
+            <LogOut className="h-5 w-5 mr-3" />
+            Logout
+          </Button>
+        )}
+      </div>
+
+      {/* Collapse Toggle - only on desktop */}
+      {!mobileOpen && (
         <Button
           variant="ghost"
           size="icon"
-          className="absolute -right-3 top-20 h-6 w-6 rounded-full border bg-background shadow-md"
+          className="absolute -right-3 top-20 h-6 w-6 rounded-full border bg-background shadow-md hidden md:flex"
           onClick={() => setCollapsed(!collapsed)}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? (
             <ChevronRight className="h-4 w-4" />
@@ -199,7 +208,64 @@ export function Sidebar() {
             <ChevronLeft className="h-4 w-4" />
           )}
         </Button>
+      )}
+    </>
+  )
+
+  return (
+    <TooltipProvider delayDuration={0}>
+      {/* Desktop Sidebar */}
+      <motion.aside
+        initial={false}
+        animate={{ width: collapsed ? 80 : 280 }}
+        className="fixed left-0 top-0 z-40 h-screen border-r bg-card/50 backdrop-blur-xl flex-col hidden md:flex"
+      >
+        {sidebarContent}
       </motion.aside>
+
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+              onClick={onMobileClose}
+            />
+            {/* Drawer */}
+            <motion.aside
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="fixed left-0 top-0 z-50 h-screen w-[280px] border-r bg-card flex flex-col md:hidden"
+            >
+              {sidebarContent}
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Logout Confirmation Dialog */}
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You will need to sign in again to access your account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleLogout} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Logout
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TooltipProvider>
   )
 }

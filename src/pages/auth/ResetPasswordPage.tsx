@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { motion } from "framer-motion"
-import { Eye, EyeOff, Lock, Zap, CheckCircle } from "lucide-react"
+import { Eye, EyeOff, Lock, Zap, CheckCircle, Check, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -29,6 +29,13 @@ const resetPasswordSchema = z.object({
 
 type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
 
+const passwordRequirements = [
+  { label: "At least 8 characters", test: (pw: string) => pw.length >= 8 },
+  { label: "One uppercase letter", test: (pw: string) => /[A-Z]/.test(pw) },
+  { label: "One lowercase letter", test: (pw: string) => /[a-z]/.test(pw) },
+  { label: "One number", test: (pw: string) => /[0-9]/.test(pw) },
+]
+
 export default function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -41,10 +48,13 @@ export default function ResetPasswordPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
   })
+
+  const passwordValue = watch("password", "")
 
   const onSubmit = async (data: ResetPasswordFormData) => {
     if (!token) {
@@ -167,8 +177,24 @@ export default function ResetPasswordPage() {
                 error={!!errors.password}
                 {...register("password")}
               />
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
+              {passwordValue.length > 0 && (
+                <div className="space-y-1.5 pt-1">
+                  {passwordRequirements.map((req) => {
+                    const met = req.test(passwordValue)
+                    return (
+                      <div key={req.label} className="flex items-center gap-2 text-xs">
+                        {met ? (
+                          <Check className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                        ) : (
+                          <X className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                        )}
+                        <span className={met ? "text-green-500" : "text-muted-foreground"}>
+                          {req.label}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
               )}
             </div>
 

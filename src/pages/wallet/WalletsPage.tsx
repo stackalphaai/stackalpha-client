@@ -33,6 +33,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { walletApi } from "@/services/api"
 import { showSuccessToast, showErrorToast, showWarningToast } from "@/lib/api-error"
@@ -56,6 +66,8 @@ export default function WalletsPage() {
   const [showKeyRevealed, setShowKeyRevealed] = useState(false)
   const [keySavedConfirmed, setKeySavedConfirmed] = useState(false)
   const [showDisconnected, setShowDisconnected] = useState(false)
+  const [walletToDisconnect, setWalletToDisconnect] = useState<string | null>(null)
+  const [showCloseKeyWarning, setShowCloseKeyWarning] = useState(false)
 
   const fetchWallets = async () => {
     try {
@@ -212,10 +224,16 @@ export default function WalletsPage() {
 
   const handleCloseSecretDialog = () => {
     if (!keySavedConfirmed) {
-      if (!confirm("Are you sure? You will NOT be able to see this private key again. Make sure you have saved it.")) {
-        return
-      }
+      setShowCloseKeyWarning(true)
+      return
     }
+    setGeneratedWallet(null)
+    setShowKeyRevealed(false)
+    setKeySavedConfirmed(false)
+  }
+
+  const handleForceCloseSecretDialog = () => {
+    setShowCloseKeyWarning(false)
     setGeneratedWallet(null)
     setShowKeyRevealed(false)
     setKeySavedConfirmed(false)
@@ -245,11 +263,10 @@ export default function WalletsPage() {
   }
 
   const handleDisconnectWallet = async (walletId: string) => {
-    if (!confirm("Are you sure you want to disconnect this wallet?")) return
-
     try {
       await walletApi.disconnectWallet(walletId)
       showSuccessToast("Wallet disconnected")
+      setWalletToDisconnect(null)
       fetchWallets()
     } catch (error) {
       showErrorToast(error, "Failed to disconnect wallet")
@@ -406,7 +423,7 @@ export default function WalletsPage() {
                 variant="ghost"
                 size="icon"
                 className="text-destructive hover:text-destructive"
-                onClick={() => handleDisconnectWallet(wallet.id)}
+                onClick={() => setWalletToDisconnect(wallet.id)}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -723,6 +740,48 @@ export default function WalletsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Disconnect Wallet Confirmation */}
+      <AlertDialog open={!!walletToDisconnect} onOpenChange={(open) => !open && setWalletToDisconnect(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disconnect Wallet</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to disconnect this wallet? You can reconnect it later, but any active trading will be stopped.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => walletToDisconnect && handleDisconnectWallet(walletToDisconnect)}
+            >
+              Disconnect
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Close Secret Key Warning */}
+      <AlertDialog open={showCloseKeyWarning} onOpenChange={setShowCloseKeyWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You will NOT be able to see this private key again. Make sure you have saved it securely before closing.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Go Back</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleForceCloseSecretDialog}
+            >
+              Close Anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   )
 }
