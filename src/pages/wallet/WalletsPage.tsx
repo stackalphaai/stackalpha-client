@@ -31,6 +31,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { walletApi } from "@/services/api"
 import { showSuccessToast, showErrorToast, showWarningToast } from "@/lib/api-error"
+import { WalletOnboardingFlow } from "./WalletOnboardingFlow"
 import type { Wallet as WalletType } from "@/types"
 
 export default function WalletsPage() {
@@ -364,19 +365,7 @@ export default function WalletsPage() {
 
       {/* Wallets */}
       {wallets.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Wallet className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No wallets connected</h3>
-            <p className="text-muted-foreground mb-4">
-              Connect your Hyperliquid wallet to start trading
-            </p>
-            <Button variant="gradient" onClick={() => setShowConnectDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Connect Your First Wallet
-            </Button>
-          </CardContent>
-        </Card>
+        <WalletOnboardingFlow onConnectWallet={() => setShowConnectDialog(true)} />
       ) : (
         <div className="space-y-6">
           {masterWallets.length > 0 && (
