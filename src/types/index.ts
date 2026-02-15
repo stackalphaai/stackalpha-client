@@ -5,6 +5,7 @@ export interface User {
   is_active: boolean
   is_verified: boolean
   is_2fa_enabled: boolean
+  is_subscribed: boolean
   has_active_subscription: boolean
   last_login: string | null
   login_count: number
