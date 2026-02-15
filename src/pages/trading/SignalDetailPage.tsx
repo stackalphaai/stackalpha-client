@@ -607,7 +607,7 @@ export default function SignalDetailPage() {
 
       {/* Insufficient Balance — Deposit Instructions Dialog */}
       <Dialog open={showDepositDialog} onOpenChange={setShowDepositDialog}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
           <DialogHeader>
             <div className="h-14 w-14 rounded-2xl bg-amber-500/20 flex items-center justify-center mx-auto mb-2">
               <CircleDollarSign className="h-7 w-7 text-amber-500" />
@@ -618,7 +618,7 @@ export default function SignalDetailPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
+          <div className="space-y-4 py-2 overflow-y-auto flex-1 min-h-0">
             {/* Balance vs Required comparison */}
             {selectedWallet && signal && (
               <div className="rounded-lg border bg-muted/50 p-4 space-y-3">
@@ -748,7 +748,7 @@ export default function SignalDetailPage() {
             </div>
           </div>
 
-          <DialogFooter className="sm:flex-col gap-2">
+          <div className="flex flex-col gap-2 pt-2 shrink-0">
             {/* Primary action — sync wallet and retry */}
             <Button
               variant="gradient"
@@ -802,7 +802,7 @@ export default function SignalDetailPage() {
                 Wallets
               </Button>
             </div>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </motion.div>
