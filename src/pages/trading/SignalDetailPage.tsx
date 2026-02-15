@@ -50,6 +50,7 @@ import { tradingApi, walletApi } from "@/services/api"
 import { useAuthStore } from "@/stores/auth"
 import { useSubscriptionModal } from "@/stores/subscription"
 import { toast } from "sonner"
+import { Separator } from "@/components/ui/separator"
 import type { SignalDetail, Wallet as WalletType } from "@/types"
 
 const INDICATOR_LABELS: Record<string, string> = {
@@ -115,6 +116,7 @@ export default function SignalDetailPage() {
   // Insufficient balance dialog
   const [showDepositDialog, setShowDepositDialog] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [isSyncing, setIsSyncing] = useState(false)
 
   useEffect(() => {
     const fetchSignal = async () => {
@@ -169,10 +171,12 @@ export default function SignalDetailPage() {
       setShowExecuteDialog(false)
       navigate("/trades")
     } catch (err: unknown) {
-      const message =
+      // Extract error message from any API response format
+      const data =
         err && typeof err === "object" && "response" in err
-          ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
+          ? (err as { response?: { data?: { detail?: string; error?: string; message?: string } } }).response?.data
           : undefined
+      const message = data?.detail || data?.error || data?.message
 
       if (message && /insufficient balance/i.test(message)) {
         setShowExecuteDialog(false)
@@ -608,18 +612,44 @@ export default function SignalDetailPage() {
             <div className="h-14 w-14 rounded-2xl bg-amber-500/20 flex items-center justify-center mx-auto mb-2">
               <CircleDollarSign className="h-7 w-7 text-amber-500" />
             </div>
-            <DialogTitle className="text-center text-xl">Fund Your Wallet</DialogTitle>
+            <DialogTitle className="text-center text-xl">Insufficient Balance</DialogTitle>
             <DialogDescription className="text-center">
-              Your wallet doesn&apos;t have enough balance to execute this trade.
-              Follow the steps below to deposit USDC.
+              You need more USDC in your Hyperliquid perps account to execute this trade.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            {/* Wallet address to fund */}
+            {/* Balance vs Required comparison */}
+            {selectedWallet && signal && (
+              <div className="rounded-lg border bg-muted/50 p-4 space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Available balance</span>
+                  <span className="font-bold text-destructive">
+                    ${(selectedWallet.balance_usd ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                {positionSizePercent && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Estimated position</span>
+                    <span className="font-bold">
+                      ~${((selectedWallet.balance_usd ?? 0) * parseFloat(positionSizePercent) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                )}
+                <Separator />
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Signal</span>
+                  <span className="font-medium">
+                    {signal.symbol} {signal.direction.toUpperCase()} @ {leverage || signal.suggested_leverage}x
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Wallet address with copy */}
             {selectedWallet && (
-              <div className="rounded-lg border bg-muted/50 p-3">
-                <p className="text-xs text-muted-foreground mb-1.5">Wallet to fund</p>
+              <div className="rounded-lg border p-3">
+                <p className="text-xs text-muted-foreground mb-1.5">Your wallet address</p>
                 <div className="flex items-center gap-2">
                   <code className="text-sm font-mono flex-1 truncate">
                     {selectedWallet.address}
@@ -638,11 +668,6 @@ export default function SignalDetailPage() {
                     {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
-                {selectedWallet.balance_usd != null && (
-                  <p className="text-xs text-muted-foreground mt-1.5">
-                    Current balance: <span className="font-medium text-foreground">${selectedWallet.balance_usd.toLocaleString()}</span>
-                  </p>
-                )}
               </div>
             )}
 
@@ -682,10 +707,10 @@ export default function SignalDetailPage() {
                   <span className="text-xs font-bold text-primary">2</span>
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Send to your wallet address</p>
+                  <p className="text-sm font-medium">Send to your wallet</p>
                   <p className="text-xs text-muted-foreground">
-                    Copy your wallet address above and withdraw USDC to it. Make
-                    sure you select the <span className="font-medium text-foreground">Arbitrum</span> network.
+                    Withdraw USDC to the address above on the{" "}
+                    <span className="font-medium text-foreground">Arbitrum</span> network.
                   </p>
                 </div>
               </div>
@@ -697,7 +722,7 @@ export default function SignalDetailPage() {
                 <div>
                   <p className="text-sm font-medium">Deposit into Hyperliquid</p>
                   <p className="text-xs text-muted-foreground">
-                    Go to{" "}
+                    Open{" "}
                     <a
                       href="https://app.hyperliquid.xyz/portfolio"
                       target="_blank"
@@ -706,50 +731,77 @@ export default function SignalDetailPage() {
                     >
                       app.hyperliquid.xyz <ExternalLink className="h-3 w-3" />
                     </a>
-                    , connect your wallet, and deposit USDC from Arbitrum into your
-                    Hyperliquid perps account.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3 items-start">
-                <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-primary">4</span>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Come back and execute</p>
-                  <p className="text-xs text-muted-foreground">
-                    Once your deposit is confirmed (usually under 2 minutes), sync
-                    your wallet on StackAlpha and execute the signal.
+                    {" "}and deposit USDC into your perps account.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Important note */}
+            {/* Security note */}
             <div className="flex gap-2.5 p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm">
               <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
               <p className="text-xs text-muted-foreground">
                 <span className="font-medium text-foreground">Your funds stay in your wallet.</span>{" "}
-                StackAlpha can only place and close trades on Hyperliquid — it cannot
+                StackAlpha can only place and close trades — it cannot
                 withdraw or transfer your funds.
               </p>
             </div>
           </div>
 
-          <DialogFooter className="sm:flex-row gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => navigate("/wallets")}>
-              <ArrowDownToLine className="h-4 w-4 mr-2" />
-              Go to Wallets
-            </Button>
+          <DialogFooter className="sm:flex-col gap-2">
+            {/* Primary action — sync wallet and retry */}
             <Button
               variant="gradient"
-              className="flex-1"
-              onClick={() => window.open("https://app.hyperliquid.xyz/portfolio", "_blank")}
+              className="w-full"
+              disabled={isSyncing}
+              onClick={async () => {
+                if (!selectedWalletId) return
+                setIsSyncing(true)
+                try {
+                  await walletApi.syncWallet(selectedWalletId)
+                  // Refresh wallet data
+                  const response = await walletApi.getWallets()
+                  const activeWallets = (response.data.items || response.data || []).filter(
+                    (w: WalletType) => w.status === "active" && w.is_trading_enabled
+                  )
+                  setWallets(activeWallets)
+                  const updatedWallet = activeWallets.find((w: WalletType) => w.id === selectedWalletId)
+                  if (updatedWallet) {
+                    toast.success(`Balance updated: $${(updatedWallet.balance_usd ?? 0).toLocaleString()}`)
+                  }
+                  // Close deposit dialog and re-open execute dialog to retry
+                  setShowDepositDialog(false)
+                  setShowExecuteDialog(true)
+                } catch {
+                  toast.error("Failed to sync wallet. Try again in a moment.")
+                } finally {
+                  setIsSyncing(false)
+                }
+              }}
             >
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Open Hyperliquid
+              {isSyncing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Syncing Wallet...
+                </>
+              ) : (
+                <>
+                  <Zap className="h-4 w-4 mr-2" />
+                  Sync Wallet & Retry
+                </>
+              )}
             </Button>
+            {/* Secondary actions */}
+            <div className="grid grid-cols-2 gap-2 w-full">
+              <Button variant="outline" onClick={() => window.open("https://app.hyperliquid.xyz/portfolio", "_blank")}>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Hyperliquid
+              </Button>
+              <Button variant="outline" onClick={() => { setShowDepositDialog(false); navigate("/wallets") }}>
+                <ArrowDownToLine className="h-4 w-4 mr-2" />
+                Wallets
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
