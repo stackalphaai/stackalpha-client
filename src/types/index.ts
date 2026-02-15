@@ -57,6 +57,15 @@ export interface Signal {
   updated_at: string
 }
 
+export interface SignalDetail extends Signal {
+  analysis_data: {
+    key_factors?: string[]
+    combined_reasoning?: string
+    market_data?: Record<string, number | string>
+  } | null
+  technical_indicators: Record<string, number> | null
+}
+
 export interface Trade {
   id: string
   user_id: string
