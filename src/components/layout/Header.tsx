@@ -78,7 +78,7 @@ export function Header({ onToggleMobileSidebar }: HeaderProps) {
           <h1 className="text-base md:text-lg font-semibold truncate">
             Welcome back, {user?.full_name?.split(" ")[0] || "Trader"}
           </h1>
-          {user?.has_active_subscription && (
+          {(user?.has_active_subscription || user?.is_subscribed) && (
             <Badge variant="success" className="hidden sm:inline-flex">Pro</Badge>
           )}
         </div>

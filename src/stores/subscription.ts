@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import { useAuthStore } from "./auth"
 
 interface SubscriptionModalState {
   isOpen: boolean
@@ -8,6 +9,11 @@ interface SubscriptionModalState {
 
 export const useSubscriptionModal = create<SubscriptionModalState>((set) => ({
   isOpen: false,
-  open: () => set({ isOpen: true }),
+  open: () => {
+    // Don't open if user is already subscribed
+    const user = useAuthStore.getState().user
+    if (user?.has_active_subscription || user?.is_subscribed) return
+    set({ isOpen: true })
+  },
   close: () => set({ isOpen: false }),
 }))

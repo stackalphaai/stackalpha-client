@@ -18,6 +18,8 @@ import {
   X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
@@ -61,7 +63,12 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const location = useLocation()
-  const { clearAuth } = useAuthStore()
+  const { user, clearAuth } = useAuthStore()
+
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return "U"
+    return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+  }
 
   const handleLogout = () => {
     clearAuth()
@@ -164,32 +171,67 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         </nav>
       </ScrollArea>
 
-      {/* Footer */}
-      <div className="border-t p-3">
+      {/* Footer — User info + Logout */}
+      <div className="border-t p-3 space-y-2">
         {collapsed && !mobileOpen ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="w-full text-muted-foreground hover:text-destructive"
-                onClick={() => setShowLogoutDialog(true)}
-                aria-label="Logout"
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Logout</TooltipContent>
-          </Tooltip>
+          <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex justify-center">
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                      {getInitials(user?.full_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p className="font-medium">{user?.full_name || "User"}</p>
+                <p className="text-xs text-muted-foreground">{user?.email}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-full text-muted-foreground hover:text-destructive"
+                  onClick={() => setShowLogoutDialog(true)}
+                  aria-label="Logout"
+                >
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Logout</TooltipContent>
+            </Tooltip>
+          </>
         ) : (
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-destructive"
-            onClick={() => setShowLogoutDialog(true)}
-          >
-            <LogOut className="h-5 w-5 mr-3" />
-            Logout
-          </Button>
+          <>
+            <div className="flex items-center gap-3 px-2 py-1.5">
+              <Avatar className="h-9 w-9 flex-shrink-0">
+                <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                  {getInitials(user?.full_name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-medium truncate">{user?.full_name || "User"}</p>
+                  {user?.has_active_subscription && (
+                    <Badge variant="success" className="text-[10px] px-1.5 py-0">Pro</Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground hover:text-destructive"
+              onClick={() => setShowLogoutDialog(true)}
+            >
+              <LogOut className="h-5 w-5 mr-3" />
+              Logout
+            </Button>
+          </>
         )}
       </div>
 

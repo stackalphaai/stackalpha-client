@@ -132,7 +132,7 @@ export default function SignalDetailPage() {
   }, [id])
 
   const openExecuteDialog = async () => {
-    if (!user?.has_active_subscription) {
+    if (!user?.has_active_subscription && !user?.is_subscribed) {
       openSubscription()
       return
     }

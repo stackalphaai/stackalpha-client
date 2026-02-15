@@ -5,18 +5,18 @@ import { AlertTriangle } from "lucide-react"
 import { Sidebar } from "./Sidebar"
 import { Header } from "./Header"
 import { Button } from "@/components/ui/button"
-import { useAuthStore } from "@/stores/auth"
+import { useAuth } from "@/hooks/useAuth"
 import { subscriptionApi } from "@/services/api"
 
 export function MainLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [expiryWarning, setExpiryWarning] = useState<string | null>(null)
   const [dismissedWarning, setDismissedWarning] = useState(false)
-  const { user } = useAuthStore()
+  const { user, isLoading } = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (!user?.has_active_subscription) return
+    if (!user?.has_active_subscription && !user?.is_subscribed) return
 
     const checkExpiry = async () => {
       try {
@@ -38,6 +38,14 @@ export function MainLayout() {
 
     checkExpiry()
   }, [user?.has_active_subscription])
+
+  if (isLoading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">

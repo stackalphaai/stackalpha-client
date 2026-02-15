@@ -116,7 +116,7 @@ export default function SignalsPage() {
       className="space-y-6"
     >
       {/* Upgrade Banner */}
-      {!user?.has_active_subscription && (
+      {!user?.has_active_subscription && !user?.is_subscribed && (
         <Card className="bg-gradient-to-r from-primary/20 via-primary/10 to-transparent border-primary/20">
           <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4">
             <div className="flex items-center gap-3">

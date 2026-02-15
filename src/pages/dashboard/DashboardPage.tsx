@@ -191,7 +191,7 @@ export default function DashboardPage() {
       )}
 
       {/* Welcome Banner */}
-      {!user?.has_active_subscription && (
+      {!user?.has_active_subscription && !user?.is_subscribed && (
         <motion.div variants={itemVariants}>
           <Card className="bg-gradient-to-r from-primary/20 via-primary/10 to-transparent border-primary/20">
             <CardContent className="flex items-center justify-between p-6">
