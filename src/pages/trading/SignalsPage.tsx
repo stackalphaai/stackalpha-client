@@ -266,7 +266,15 @@ export default function SignalsPage() {
                   )}
 
                   {signal.status === "active" && (
-                    <Button variant="gradient" className="w-full" size="sm">
+                    <Button
+                      variant="gradient"
+                      className="w-full"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigate(`/signals/${signal.id}`)
+                      }}
+                    >
                       Execute Signal
                     </Button>
                   )}

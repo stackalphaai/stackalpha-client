@@ -13,14 +13,35 @@ import {
   Zap,
   Activity,
   Gauge,
+  Loader2,
+  AlertTriangle,
+  Wallet,
 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { tradingApi } from "@/services/api"
-import type { SignalDetail } from "@/types"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { tradingApi, walletApi } from "@/services/api"
+import { toast } from "sonner"
+import type { SignalDetail, Wallet as WalletType } from "@/types"
 
 const INDICATOR_LABELS: Record<string, string> = {
   rsi_14: "RSI (14)",
@@ -72,6 +93,14 @@ export default function SignalDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Execute dialog state
+  const [showExecuteDialog, setShowExecuteDialog] = useState(false)
+  const [wallets, setWallets] = useState<WalletType[]>([])
+  const [selectedWalletId, setSelectedWalletId] = useState("")
+  const [leverage, setLeverage] = useState("")
+  const [positionSizePercent, setPositionSizePercent] = useState("")
+  const [isExecuting, setIsExecuting] = useState(false)
+
   useEffect(() => {
     const fetchSignal = async () => {
       if (!id) return
@@ -86,6 +115,49 @@ export default function SignalDetailPage() {
     }
     fetchSignal()
   }, [id])
+
+  const openExecuteDialog = async () => {
+    try {
+      const response = await walletApi.getWallets()
+      const activeWallets = (response.data.items || response.data || []).filter(
+        (w: WalletType) => w.status === "active" && w.is_trading_enabled
+      )
+      setWallets(activeWallets)
+      if (activeWallets.length === 1) {
+        setSelectedWalletId(activeWallets[0].id)
+      }
+      if (signal) {
+        setLeverage(String(signal.suggested_leverage))
+        setPositionSizePercent(String(signal.suggested_position_size_percent))
+      }
+      setShowExecuteDialog(true)
+    } catch {
+      toast.error("Failed to load wallets")
+    }
+  }
+
+  const handleExecute = async () => {
+    if (!signal || !selectedWalletId) return
+
+    setIsExecuting(true)
+    try {
+      const lev = leverage ? parseInt(leverage) : undefined
+      const size = positionSizePercent ? parseFloat(positionSizePercent) : undefined
+
+      await tradingApi.executeSignal(signal.id, selectedWalletId, size, lev)
+      toast.success(`Trade opened for ${signal.symbol} ${signal.direction.toUpperCase()}`)
+      setShowExecuteDialog(false)
+      navigate("/trades")
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === "object" && "response" in err
+          ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
+          : undefined
+      toast.error(message || "Failed to execute signal")
+    } finally {
+      setIsExecuting(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -116,6 +188,7 @@ export default function SignalDetailPage() {
   const isLong = signal.direction === "long"
   const indicators = signal.technical_indicators
   const analysis = signal.analysis_data
+  const selectedWallet = wallets.find((w) => w.id === selectedWalletId)
 
   return (
     <motion.div
@@ -152,7 +225,7 @@ export default function SignalDetailPage() {
           </div>
         </div>
         {signal.status === "active" && (
-          <Button variant="gradient" onClick={() => navigate(`/signals/${signal.id}`)}>
+          <Button variant="gradient" onClick={openExecuteDialog}>
             <Zap className="h-4 w-4 mr-2" />
             Execute Signal
           </Button>
@@ -366,6 +439,141 @@ export default function SignalDetailPage() {
           </Card>
         )}
       </div>
+
+      {/* Execute Signal Dialog */}
+      <Dialog open={showExecuteDialog} onOpenChange={setShowExecuteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              Execute Signal — {signal.symbol} {signal.direction.toUpperCase()}
+            </DialogTitle>
+            <DialogDescription>
+              Review parameters and confirm to open a {signal.direction} position.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Wallet Selection */}
+            <div className="space-y-2">
+              <Label>Wallet</Label>
+              {wallets.length === 0 ? (
+                <div className="flex items-center gap-2 p-3 rounded-lg border border-destructive/50 bg-destructive/10 text-sm">
+                  <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                  <span>
+                    No trading-enabled wallets found.{" "}
+                    <button className="text-primary underline" onClick={() => navigate("/wallets")}>
+                      Connect a wallet
+                    </button>{" "}
+                    first.
+                  </span>
+                </div>
+              ) : (
+                <Select value={selectedWalletId} onValueChange={setSelectedWalletId}>
+                  <SelectTrigger>
+                    <Wallet className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Select wallet" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {wallets.map((w) => (
+                      <SelectItem key={w.id} value={w.id}>
+                        {w.address.slice(0, 6)}...{w.address.slice(-4)} ({w.wallet_type})
+                        {w.balance_usd != null && ` — $${w.balance_usd.toLocaleString()}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            {/* Trade Parameters */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="leverage">Leverage</Label>
+                <Input
+                  id="leverage"
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={leverage}
+                  onChange={(e) => setLeverage(e.target.value)}
+                  placeholder={String(signal.suggested_leverage)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="positionSize">Position Size %</Label>
+                <Input
+                  id="positionSize"
+                  type="number"
+                  min={1}
+                  max={100}
+                  step={0.5}
+                  value={positionSizePercent}
+                  onChange={(e) => setPositionSizePercent(e.target.value)}
+                  placeholder={String(signal.suggested_position_size_percent)}
+                />
+              </div>
+            </div>
+
+            {/* Trade Summary */}
+            <div className="rounded-lg border p-3 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Direction</span>
+                <Badge variant={isLong ? "long" : "short"}>
+                  {signal.direction.toUpperCase()}
+                </Badge>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Entry Price</span>
+                <span className="font-medium">${signal.entry_price.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Take Profit</span>
+                <span className="font-medium text-green-500">${signal.take_profit_price.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Stop Loss</span>
+                <span className="font-medium text-red-500">${signal.stop_loss_price.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">R:R Ratio</span>
+                <span className="font-medium">{signal.risk_reward_ratio.toFixed(2)}</span>
+              </div>
+              {selectedWallet?.balance_usd != null && positionSizePercent && (
+                <div className="flex justify-between border-t pt-2">
+                  <span className="text-muted-foreground">Est. Position</span>
+                  <span className="font-medium">
+                    ~${((selectedWallet.balance_usd * parseFloat(positionSizePercent)) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowExecuteDialog(false)} disabled={isExecuting}>
+              Cancel
+            </Button>
+            <Button
+              variant="gradient"
+              onClick={handleExecute}
+              disabled={isExecuting || !selectedWalletId || wallets.length === 0}
+            >
+              {isExecuting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Executing...
+                </>
+              ) : (
+                <>
+                  <Zap className="h-4 w-4 mr-2" />
+                  Confirm Trade
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   )
 }
