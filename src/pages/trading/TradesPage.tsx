@@ -13,6 +13,7 @@ import {
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useSubscriptionModal } from "@/stores/subscription"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -40,6 +41,7 @@ import type { Trade } from "@/types"
 export default function TradesPage() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const openSubscription = useSubscriptionModal((s) => s.open)
   const [isLoading, setIsLoading] = useState(true)
   const [trades, setTrades] = useState<Trade[]>([])
   const [openTrades, setOpenTrades] = useState<Trade[]>([])
@@ -242,7 +244,7 @@ export default function TradesPage() {
                 <p className="text-xs text-muted-foreground">Execute signals automatically with AI-powered trading</p>
               </div>
             </div>
-            <Button variant="gradient" size="sm" onClick={() => navigate("/subscription")}>
+            <Button variant="gradient" size="sm" onClick={openSubscription}>
               Upgrade
             </Button>
           </CardContent>

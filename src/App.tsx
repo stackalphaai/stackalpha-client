@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { MainLayout } from "@/components/layout/MainLayout"
 import { AuthLayout } from "@/components/layout/AuthLayout"
 import { Toaster } from "@/components/ui/sonner"
+import { SubscriptionModal } from "@/components/subscription/SubscriptionModal"
 import { useThemeStore, applyTheme } from "@/stores/theme"
 import { useAuthStore } from "@/stores/auth"
 
@@ -166,6 +167,7 @@ function App() {
           />
         </Routes>
         <Toaster />
+        <SubscriptionModal />
       </BrowserRouter>
     </QueryClientProvider>
   )

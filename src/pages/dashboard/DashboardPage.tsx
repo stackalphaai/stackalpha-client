@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { useNavigate } from "react-router-dom"
+import { useSubscriptionModal } from "@/stores/subscription"
 import {
   TrendingUp,
   TrendingDown,
@@ -50,6 +51,7 @@ const itemVariants = {
 export default function DashboardPage() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const openSubscription = useSubscriptionModal((s) => s.open)
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
   const [analytics, setAnalytics] = useState<TradeAnalytics | null>(null)
@@ -199,7 +201,7 @@ export default function DashboardPage() {
                   Get unlimited signals and auto-trading features
                 </p>
               </div>
-              <Button variant="gradient" onClick={() => navigate("/subscription")}>
+              <Button variant="gradient" onClick={openSubscription}>
                 Upgrade Now
               </Button>
             </CardContent>

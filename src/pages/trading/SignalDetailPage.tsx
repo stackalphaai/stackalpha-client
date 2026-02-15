@@ -40,6 +40,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { tradingApi, walletApi } from "@/services/api"
+import { useAuthStore } from "@/stores/auth"
+import { useSubscriptionModal } from "@/stores/subscription"
 import { toast } from "sonner"
 import type { SignalDetail, Wallet as WalletType } from "@/types"
 
@@ -89,6 +91,8 @@ function getStatusVariant(status: string) {
 export default function SignalDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user } = useAuthStore()
+  const openSubscription = useSubscriptionModal((s) => s.open)
   const [signal, setSignal] = useState<SignalDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -117,6 +121,11 @@ export default function SignalDetailPage() {
   }, [id])
 
   const openExecuteDialog = async () => {
+    if (!user?.has_active_subscription) {
+      openSubscription()
+      return
+    }
+
     try {
       const response = await walletApi.getWallets()
       const activeWallets = (response.data.items || response.data || []).filter(

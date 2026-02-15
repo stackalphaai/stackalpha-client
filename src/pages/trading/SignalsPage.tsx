@@ -26,11 +26,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { tradingApi } from "@/services/api"
+import { useSubscriptionModal } from "@/stores/subscription"
 import type { Signal } from "@/types"
 
 export default function SignalsPage() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const openSubscription = useSubscriptionModal((s) => s.open)
   const [isLoading, setIsLoading] = useState(true)
   const [signals, setSignals] = useState<Signal[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -126,7 +128,7 @@ export default function SignalsPage() {
                 <p className="text-xs text-muted-foreground">Get real-time AI-powered trading opportunities</p>
               </div>
             </div>
-            <Button variant="gradient" size="sm" onClick={() => navigate("/subscription")}>
+            <Button variant="gradient" size="sm" onClick={openSubscription}>
               Upgrade
             </Button>
           </CardContent>
