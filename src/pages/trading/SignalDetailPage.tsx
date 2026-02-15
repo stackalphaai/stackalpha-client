@@ -16,6 +16,13 @@ import {
   Loader2,
   AlertTriangle,
   Wallet,
+  Copy,
+  Check,
+  ExternalLink,
+  ArrowDownToLine,
+  CircleDollarSign,
+  Network,
+  ShieldCheck,
 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -105,6 +112,10 @@ export default function SignalDetailPage() {
   const [positionSizePercent, setPositionSizePercent] = useState("")
   const [isExecuting, setIsExecuting] = useState(false)
 
+  // Insufficient balance dialog
+  const [showDepositDialog, setShowDepositDialog] = useState(false)
+  const [copied, setCopied] = useState(false)
+
   useEffect(() => {
     const fetchSignal = async () => {
       if (!id) return
@@ -162,7 +173,13 @@ export default function SignalDetailPage() {
         err && typeof err === "object" && "response" in err
           ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
           : undefined
-      toast.error(message || "Failed to execute signal")
+
+      if (message && /insufficient balance/i.test(message)) {
+        setShowExecuteDialog(false)
+        setShowDepositDialog(true)
+      } else {
+        toast.error(message || "Failed to execute signal")
+      }
     } finally {
       setIsExecuting(false)
     }
@@ -579,6 +596,159 @@ export default function SignalDetailPage() {
                   Confirm Trade
                 </>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Insufficient Balance — Deposit Instructions Dialog */}
+      <Dialog open={showDepositDialog} onOpenChange={setShowDepositDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <div className="h-14 w-14 rounded-2xl bg-amber-500/20 flex items-center justify-center mx-auto mb-2">
+              <CircleDollarSign className="h-7 w-7 text-amber-500" />
+            </div>
+            <DialogTitle className="text-center text-xl">Fund Your Wallet</DialogTitle>
+            <DialogDescription className="text-center">
+              Your wallet doesn&apos;t have enough balance to execute this trade.
+              Follow the steps below to deposit USDC.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Wallet address to fund */}
+            {selectedWallet && (
+              <div className="rounded-lg border bg-muted/50 p-3">
+                <p className="text-xs text-muted-foreground mb-1.5">Wallet to fund</p>
+                <div className="flex items-center gap-2">
+                  <code className="text-sm font-mono flex-1 truncate">
+                    {selectedWallet.address}
+                  </code>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedWallet.address)
+                      setCopied(true)
+                      toast.success("Address copied!")
+                      setTimeout(() => setCopied(false), 2000)
+                    }}
+                  >
+                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+                {selectedWallet.balance_usd != null && (
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    Current balance: <span className="font-medium text-foreground">${selectedWallet.balance_usd.toLocaleString()}</span>
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Network & currency info */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg border p-3 text-center">
+                <Network className="h-5 w-5 mx-auto mb-1 text-primary" />
+                <p className="text-xs text-muted-foreground">Network</p>
+                <p className="text-sm font-semibold">Arbitrum One</p>
+              </div>
+              <div className="rounded-lg border p-3 text-center">
+                <CircleDollarSign className="h-5 w-5 mx-auto mb-1 text-primary" />
+                <p className="text-xs text-muted-foreground">Currency</p>
+                <p className="text-sm font-semibold">USDC</p>
+              </div>
+            </div>
+
+            {/* Step-by-step instructions */}
+            <div className="space-y-3">
+              <p className="text-sm font-medium">How to deposit</p>
+
+              <div className="flex gap-3 items-start">
+                <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-primary">1</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Get USDC on Arbitrum</p>
+                  <p className="text-xs text-muted-foreground">
+                    Buy USDC on any exchange (Binance, Coinbase, Bybit) or bridge
+                    from another network to Arbitrum One.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 items-start">
+                <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-primary">2</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Send to your wallet address</p>
+                  <p className="text-xs text-muted-foreground">
+                    Copy your wallet address above and withdraw USDC to it. Make
+                    sure you select the <span className="font-medium text-foreground">Arbitrum</span> network.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 items-start">
+                <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-primary">3</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Deposit into Hyperliquid</p>
+                  <p className="text-xs text-muted-foreground">
+                    Go to{" "}
+                    <a
+                      href="https://app.hyperliquid.xyz/portfolio"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline inline-flex items-center gap-0.5"
+                    >
+                      app.hyperliquid.xyz <ExternalLink className="h-3 w-3" />
+                    </a>
+                    , connect your wallet, and deposit USDC from Arbitrum into your
+                    Hyperliquid perps account.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 items-start">
+                <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-xs font-bold text-primary">4</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Come back and execute</p>
+                  <p className="text-xs text-muted-foreground">
+                    Once your deposit is confirmed (usually under 2 minutes), sync
+                    your wallet on StackAlpha and execute the signal.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Important note */}
+            <div className="flex gap-2.5 p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm">
+              <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <p className="text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">Your funds stay in your wallet.</span>{" "}
+                StackAlpha can only place and close trades on Hyperliquid — it cannot
+                withdraw or transfer your funds.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="sm:flex-row gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => navigate("/wallets")}>
+              <ArrowDownToLine className="h-4 w-4 mr-2" />
+              Go to Wallets
+            </Button>
+            <Button
+              variant="gradient"
+              className="flex-1"
+              onClick={() => window.open("https://app.hyperliquid.xyz/portfolio", "_blank")}
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Open Hyperliquid
             </Button>
           </DialogFooter>
         </DialogContent>
