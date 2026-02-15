@@ -6,6 +6,7 @@ import { CheckCircle, Crown, ArrowRight } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { subscriptionApi } from "@/services/api"
+import { refreshUser } from "@/stores/auth"
 
 export default function SubscriptionSuccessPage() {
   const navigate = useNavigate()
@@ -24,6 +25,7 @@ export default function SubscriptionSuccessPage() {
           if (response.data?.status === "active") {
             setIsActive(true)
             setIsVerifying(false)
+            await refreshUser()
             return true
           }
         } catch {

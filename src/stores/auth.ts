@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
+import { userApi } from "@/services/api"
 import type { User, TokenResponse } from "@/types"
 
 interface AuthState {
@@ -56,3 +57,15 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 )
+
+/** Refetch user profile from the API and update the store. */
+export async function refreshUser(): Promise<User | null> {
+  try {
+    const response = await userApi.getProfile()
+    const user = response.data as User
+    useAuthStore.getState().setUser(user)
+    return user
+  } catch {
+    return null
+  }
+}
