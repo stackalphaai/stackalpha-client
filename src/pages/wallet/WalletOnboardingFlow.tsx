@@ -88,13 +88,13 @@ const walletTypes = [
     bestFor: "Experienced traders",
   },
   {
-    type: "API Wallet",
+    type: "API Wallet (Agent)",
     icon: Bot,
     badge: "Automated",
     points: [
-      "Generated & managed by StackAlpha",
-      "No manual key management needed",
-      "Optimized for automated strategies",
+      "Trades on behalf of your master wallet",
+      "Your funds stay in your own wallet",
+      "Approve via Hyperliquid API page",
     ],
     bestFor: "Hands-off trading",
   },

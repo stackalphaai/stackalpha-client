@@ -16,6 +16,7 @@ import {
   EyeOff,
   Download,
   AlertTriangle,
+  ExternalLink,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -51,6 +52,7 @@ import type { Wallet as WalletType } from "@/types"
 
 interface GeneratedWallet {
   address: string
+  master_address: string
   private_key: string
 }
 
@@ -68,6 +70,8 @@ export default function WalletsPage() {
   const [showDisconnected, setShowDisconnected] = useState(false)
   const [walletToDisconnect, setWalletToDisconnect] = useState<string | null>(null)
   const [showCloseKeyWarning, setShowCloseKeyWarning] = useState(false)
+  const [masterAddressForApi, setMasterAddressForApi] = useState("")
+  const [verifyingWalletId, setVerifyingWalletId] = useState<string | null>(null)
 
   const fetchWallets = async () => {
     try {
@@ -105,11 +109,16 @@ export default function WalletsPage() {
   }
 
   const handleGenerateApiWallet = async () => {
+    if (!masterAddressForApi) {
+      showWarningToast("Please enter your Hyperliquid master wallet address")
+      return
+    }
     setIsGenerating(true)
     try {
-      const response = await walletApi.generateApiWallet()
+      const response = await walletApi.generateApiWallet(masterAddressForApi)
       setGeneratedWallet(response.data)
       setShowConnectDialog(false)
+      setMasterAddressForApi("")
       setShowKeyRevealed(false)
       setKeySavedConfirmed(false)
       fetchWallets()
@@ -120,6 +129,23 @@ export default function WalletsPage() {
     }
   }
 
+  const handleVerifyAgent = async (walletId: string) => {
+    setVerifyingWalletId(walletId)
+    try {
+      const response = await walletApi.verifyAgentApproval(walletId)
+      if (response.data.is_agent_approved) {
+        showSuccessToast("Agent wallet approved! Trading is now enabled.")
+      } else {
+        showWarningToast("Agent not yet approved. Please approve it on app.hyperliquid.xyz first.")
+      }
+      fetchWallets()
+    } catch (error) {
+      showErrorToast(error, "Failed to verify agent approval")
+    } finally {
+      setVerifyingWalletId(null)
+    }
+  }
+
   const handleDownloadKey = () => {
     if (!generatedWallet) return
     const content = [
@@ -127,8 +153,9 @@ export default function WalletsPage() {
       "  StackAlpha API Wallet - KEEP THIS FILE SECURE",
       "============================================================",
       "",
-      `Wallet Address: ${generatedWallet.address}`,
-      `Private Key:    ${generatedWallet.private_key}`,
+      `Agent Wallet Address: ${generatedWallet.address}`,
+      `Master Wallet:       ${generatedWallet.master_address}`,
+      `Private Key:         ${generatedWallet.private_key}`,
       "",
       "",
       "------------------------------------------------------------",
@@ -146,14 +173,15 @@ export default function WalletsPage() {
       "",
       "",
       "------------------------------------------------------------",
-      "  HOW TO FUND YOUR WALLET",
+      "  HOW TO ENABLE TRADING",
       "------------------------------------------------------------",
       "",
-      "1. Copy your Wallet Address above.",
-      "2. From any exchange or wallet, send USDC on the Arbitrum",
-      "   network to your wallet address.",
-      "3. Once funded, StackAlpha will automatically execute",
-      "   AI-powered trades for you.",
+      "1. Go to https://app.hyperliquid.xyz/API",
+      "2. Approve the Agent Wallet Address above as an",
+      "   authorized agent for your master wallet.",
+      "3. Return to StackAlpha and click 'Verify Approval'.",
+      "4. Once verified, StackAlpha will execute trades using",
+      "   your master wallet's funds.",
       "",
       "",
       "------------------------------------------------------------",
@@ -359,9 +387,18 @@ export default function WalletsPage() {
 
         <div className="space-y-3">
           <div>
-            <p className="text-xs text-muted-foreground">Address</p>
+            <p className="text-xs text-muted-foreground">
+              {wallet.wallet_type === "api" ? "Agent Address" : "Address"}
+            </p>
             <p className="font-mono text-sm truncate">{wallet.address}</p>
           </div>
+
+          {wallet.master_address && (
+            <div>
+              <p className="text-xs text-muted-foreground">Master Wallet</p>
+              <p className="font-mono text-sm truncate">{wallet.master_address}</p>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -392,6 +429,46 @@ export default function WalletsPage() {
             </div>
           )}
 
+          {/* Agent Approval for API wallets */}
+          {wallet.wallet_type === "api" && !wallet.is_agent_approved && (
+            <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 space-y-2">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium text-yellow-600 dark:text-yellow-400">Agent Approval Required</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Approve this agent wallet on Hyperliquid to enable trading.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs gap-1"
+                  onClick={() => window.open("https://app.hyperliquid.xyz/API", "_blank")}
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Approve on Hyperliquid
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => handleVerifyAgent(wallet.id)}
+                  disabled={verifyingWalletId === wallet.id}
+                >
+                  {verifyingWalletId === wallet.id ? (
+                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                  ) : (
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                  )}
+                  Verify Approval
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between pt-3 border-t">
             <div className="flex items-center gap-2">
               {wallet.is_authorized ? (
@@ -403,6 +480,12 @@ export default function WalletsPage() {
                 <Badge variant="warning" className="gap-1">
                   <AlertCircle className="h-3 w-3" />
                   Not Authorized
+                </Badge>
+              )}
+              {wallet.wallet_type === "api" && wallet.is_agent_approved && (
+                <Badge variant="success" className="gap-1">
+                  <Shield className="h-3 w-3" />
+                  Agent Approved
                 </Badge>
               )}
             </div>
@@ -493,17 +576,31 @@ export default function WalletsPage() {
                 </Button>
               </TabsContent>
               <TabsContent value="generate" className="space-y-4 pt-4">
-                <div className="p-4 rounded-lg bg-muted/50">
+                <div className="p-4 rounded-lg bg-muted/50 space-y-2">
                   <p className="text-sm">
-                    Generate a new API wallet that will be managed by StackAlpha.
-                    This wallet will be used for automated trading.
+                    Generate an API wallet (agent) linked to your Hyperliquid master wallet.
+                    The agent signs trades on behalf of your master account.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Your funds stay in your master wallet. The API wallet only has permission to trade.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Your Hyperliquid Master Address</Label>
+                  <Input
+                    placeholder="0x..."
+                    value={masterAddressForApi}
+                    onChange={(e) => setMasterAddressForApi(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    The address of your funded Hyperliquid wallet
                   </p>
                 </div>
                 <Button
                   variant="gradient"
                   className="w-full"
                   onClick={handleGenerateApiWallet}
-                  disabled={isGenerating}
+                  disabled={isGenerating || !masterAddressForApi}
                 >
                   {isGenerating ? "Generating..." : "Generate API Wallet"}
                 </Button>
@@ -690,15 +787,15 @@ export default function WalletsPage() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
-                  <span><strong>Your funds, your control.</strong> StackAlpha cannot withdraw or transfer your funds. The private key is only used to place and close trades on Hyperliquid.</span>
+                  <span><strong>Your funds, your control.</strong> This is an agent wallet — it can only place trades on behalf of your master wallet. It cannot withdraw or transfer your funds.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
-                  <span><strong>Backup &amp; recovery.</strong> You can import this private key into MetaMask or any Ethereum-compatible wallet at any time to access your funds directly.</span>
+                  <span><strong>Agent approval required.</strong> You must approve this agent on app.hyperliquid.xyz/API before StackAlpha can trade on your behalf.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
-                  <span><strong>Fund your wallet.</strong> Send USDC on the Arbitrum network to the wallet address above to start trading.</span>
+                  <span><strong>Revocable at any time.</strong> You can revoke agent access from Hyperliquid at any time to stop automated trading.</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <AlertTriangle className="h-3.5 w-3.5 text-yellow-500 mt-0.5 shrink-0" />
@@ -712,8 +809,20 @@ export default function WalletsPage() {
               <span className="text-sm font-semibold">Next Steps</span>
               <ol className="space-y-1.5 text-sm text-muted-foreground list-decimal list-inside">
                 <li>Save your private key in a secure location (password manager recommended)</li>
-                <li>Send USDC on Arbitrum to your new wallet address</li>
-                <li>Once funded, StackAlpha will automatically execute AI-powered trades for you</li>
+                <li>
+                  Go to{" "}
+                  <a
+                    href="https://app.hyperliquid.xyz/API"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline"
+                  >
+                    app.hyperliquid.xyz/API
+                  </a>{" "}
+                  and approve this agent wallet address as an authorized agent
+                </li>
+                <li>Come back and click "Verify Approval" on the wallet card</li>
+                <li>Once verified, StackAlpha will execute AI-powered trades using your master wallet's funds</li>
               </ol>
             </div>
 

@@ -139,7 +139,10 @@ export const walletApi = {
     api.post(`/v1/wallets/${walletId}/authorize`, { signature, message }),
   getAuthMessage: (walletId: string) =>
     api.get(`/v1/wallets/${walletId}/auth-message`),
-  generateApiWallet: () => api.post("/v1/wallets/generate-api-wallet"),
+  generateApiWallet: (masterAddress: string) =>
+    api.post("/v1/wallets/generate-api-wallet", { master_address: masterAddress }),
+  verifyAgentApproval: (walletId: string) =>
+    api.post(`/v1/wallets/${walletId}/verify-agent`),
   getBalance: (walletId: string) =>
     api.get(`/v1/wallets/${walletId}/balance`),
   getPositions: (walletId: string) =>

@@ -23,8 +23,10 @@ export interface Wallet {
   address: string
   wallet_type: "master" | "api"
   status: "pending" | "active" | "disconnected" | "suspended"
+  master_address: string | null
   is_trading_enabled: boolean
   is_authorized: boolean
+  is_agent_approved: boolean
   balance_usd: number | null
   margin_used: number | null
   unrealized_pnl: number | null
