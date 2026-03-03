@@ -46,12 +46,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { tradingApi, walletApi } from "@/services/api"
+import { tradingApi, walletApi, exchangeApi } from "@/services/api"
 import { useAuthStore } from "@/stores/auth"
 import { useSubscriptionModal } from "@/stores/subscription"
 import { toast } from "sonner"
 import { Separator } from "@/components/ui/separator"
-import type { SignalDetail, Wallet as WalletType } from "@/types"
+import type { SignalDetail, Wallet as WalletType, ExchangeConnection } from "@/types"
 
 const INDICATOR_LABELS: Record<string, string> = {
   rsi_14: "RSI (14)",
@@ -108,7 +108,9 @@ export default function SignalDetailPage() {
   // Execute dialog state
   const [showExecuteDialog, setShowExecuteDialog] = useState(false)
   const [wallets, setWallets] = useState<WalletType[]>([])
+  const [exchanges, setExchanges] = useState<ExchangeConnection[]>([])
   const [selectedWalletId, setSelectedWalletId] = useState("")
+  const [selectedExchangeId, setSelectedExchangeId] = useState("")
   const [leverage, setLeverage] = useState("")
   const [positionSizePercent, setPositionSizePercent] = useState("")
   const [isExecuting, setIsExecuting] = useState(false)
@@ -117,6 +119,8 @@ export default function SignalDetailPage() {
   const [showDepositDialog, setShowDepositDialog] = useState(false)
   const [copied, setCopied] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
+
+  const isBinanceSignal = signal?.exchange === "binance"
 
   useEffect(() => {
     const fetchSignal = async () => {
@@ -140,13 +144,26 @@ export default function SignalDetailPage() {
     }
 
     try {
-      const response = await walletApi.getWallets()
-      const activeWallets = (response.data.items || response.data || []).filter(
-        (w: WalletType) => w.status === "active" && w.is_trading_enabled
-      )
-      setWallets(activeWallets)
-      if (activeWallets.length === 1) {
-        setSelectedWalletId(activeWallets[0].id)
+      if (signal?.exchange === "binance") {
+        // Load exchange connections for Binance signals
+        const response = await exchangeApi.getConnections()
+        const activeExchanges = (response.data.items || response.data || []).filter(
+          (c: ExchangeConnection) => c.status === "active"
+        )
+        setExchanges(activeExchanges)
+        if (activeExchanges.length === 1) {
+          setSelectedExchangeId(activeExchanges[0].id)
+        }
+      } else {
+        // Load wallets for Hyperliquid signals
+        const response = await walletApi.getWallets()
+        const activeWallets = (response.data.items || response.data || []).filter(
+          (w: WalletType) => w.status === "active" && w.is_trading_enabled
+        )
+        setWallets(activeWallets)
+        if (activeWallets.length === 1) {
+          setSelectedWalletId(activeWallets[0].id)
+        }
       }
       if (signal) {
         setLeverage(String(signal.suggested_leverage))
@@ -154,19 +171,26 @@ export default function SignalDetailPage() {
       }
       setShowExecuteDialog(true)
     } catch {
-      toast.error("Failed to load wallets")
+      toast.error(signal?.exchange === "binance" ? "Failed to load exchanges" : "Failed to load wallets")
     }
   }
 
   const handleExecute = async () => {
-    if (!signal || !selectedWalletId) return
+    if (!signal) return
+    if (isBinanceSignal && !selectedExchangeId) return
+    if (!isBinanceSignal && !selectedWalletId) return
 
     setIsExecuting(true)
     try {
       const lev = leverage ? parseInt(leverage) : undefined
       const size = positionSizePercent ? parseFloat(positionSizePercent) : undefined
 
-      await tradingApi.executeSignal(signal.id, selectedWalletId, size, lev)
+      await tradingApi.executeSignal(signal.id, {
+        wallet_id: isBinanceSignal ? undefined : selectedWalletId,
+        exchange_connection_id: isBinanceSignal ? selectedExchangeId : undefined,
+        position_size_percent: size,
+        leverage: lev,
+      })
       toast.success(`Trade opened for ${signal.symbol} ${signal.direction.toUpperCase()}`)
       setShowExecuteDialog(false)
       navigate("/trades")
@@ -219,6 +243,7 @@ export default function SignalDetailPage() {
   const indicators = signal.technical_indicators
   const analysis = signal.analysis_data
   const selectedWallet = wallets.find((w) => w.id === selectedWalletId)
+  const selectedExchange = exchanges.find((e) => e.id === selectedExchangeId)
 
   return (
     <motion.div
@@ -484,37 +509,75 @@ export default function SignalDetailPage() {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            {/* Wallet Selection */}
-            <div className="space-y-2">
-              <Label>Wallet</Label>
-              {wallets.length === 0 ? (
-                <div className="flex items-center gap-2 p-3 rounded-lg border border-destructive/50 bg-destructive/10 text-sm">
-                  <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-                  <span>
-                    No trading-enabled wallets found.{" "}
-                    <button className="text-primary underline" onClick={() => navigate("/wallets")}>
-                      Connect a wallet
-                    </button>{" "}
-                    first.
-                  </span>
-                </div>
-              ) : (
-                <Select value={selectedWalletId} onValueChange={setSelectedWalletId}>
-                  <SelectTrigger>
-                    <Wallet className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Select wallet" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {wallets.map((w) => (
-                      <SelectItem key={w.id} value={w.id}>
-                        {w.address.slice(0, 6)}...{w.address.slice(-4)} ({w.wallet_type})
-                        {w.balance_usd != null && ` — $${w.balance_usd.toLocaleString()}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
+            {/* Exchange badge */}
+            <Badge variant="outline" className="text-xs">
+              {isBinanceSignal ? "Binance Futures" : "Hyperliquid"}
+            </Badge>
+
+            {/* Wallet / Exchange Selection */}
+            {isBinanceSignal ? (
+              <div className="space-y-2">
+                <Label>Exchange Connection</Label>
+                {exchanges.length === 0 ? (
+                  <div className="flex items-center gap-2 p-3 rounded-lg border border-destructive/50 bg-destructive/10 text-sm">
+                    <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                    <span>
+                      No Binance connections found.{" "}
+                      <button className="text-primary underline" onClick={() => navigate("/exchanges")}>
+                        Connect your exchange
+                      </button>{" "}
+                      first.
+                    </span>
+                  </div>
+                ) : (
+                  <Select value={selectedExchangeId} onValueChange={setSelectedExchangeId}>
+                    <SelectTrigger>
+                      <Wallet className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Select exchange" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {exchanges.map((e) => (
+                        <SelectItem key={e.id} value={e.id}>
+                          {e.label || "Binance"} {e.is_testnet ? "(Testnet)" : ""}
+                          {e.balance_usd != null && ` — $${e.balance_usd.toLocaleString()}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Wallet</Label>
+                {wallets.length === 0 ? (
+                  <div className="flex items-center gap-2 p-3 rounded-lg border border-destructive/50 bg-destructive/10 text-sm">
+                    <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                    <span>
+                      No trading-enabled wallets found.{" "}
+                      <button className="text-primary underline" onClick={() => navigate("/wallets")}>
+                        Connect a wallet
+                      </button>{" "}
+                      first.
+                    </span>
+                  </div>
+                ) : (
+                  <Select value={selectedWalletId} onValueChange={setSelectedWalletId}>
+                    <SelectTrigger>
+                      <Wallet className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Select wallet" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {wallets.map((w) => (
+                        <SelectItem key={w.id} value={w.id}>
+                          {w.address.slice(0, 6)}...{w.address.slice(-4)} ({w.wallet_type})
+                          {w.balance_usd != null && ` — $${w.balance_usd.toLocaleString()}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            )}
 
             {/* Trade Parameters */}
             <div className="grid grid-cols-2 gap-4">
@@ -569,14 +632,20 @@ export default function SignalDetailPage() {
                 <span className="text-muted-foreground">R:R Ratio</span>
                 <span className="font-medium">{signal.risk_reward_ratio.toFixed(2)}</span>
               </div>
-              {selectedWallet?.balance_usd != null && positionSizePercent && (
-                <div className="flex justify-between border-t pt-2">
-                  <span className="text-muted-foreground">Est. Position</span>
-                  <span className="font-medium">
-                    ~${((selectedWallet.balance_usd * parseFloat(positionSizePercent)) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                  </span>
-                </div>
-              )}
+              {(() => {
+                const balanceSource = isBinanceSignal ? selectedExchange?.balance_usd : selectedWallet?.balance_usd
+                if (balanceSource != null && positionSizePercent) {
+                  return (
+                    <div className="flex justify-between border-t pt-2">
+                      <span className="text-muted-foreground">Est. Position</span>
+                      <span className="font-medium">
+                        ~${((balanceSource * parseFloat(positionSizePercent)) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  )
+                }
+                return null
+              })()}
             </div>
           </div>
 
@@ -587,7 +656,10 @@ export default function SignalDetailPage() {
             <Button
               variant="gradient"
               onClick={handleExecute}
-              disabled={isExecuting || !selectedWalletId || wallets.length === 0}
+              disabled={
+                isExecuting ||
+                (isBinanceSignal ? !selectedExchangeId || exchanges.length === 0 : !selectedWalletId || wallets.length === 0)
+              }
             >
               {isExecuting ? (
                 <>

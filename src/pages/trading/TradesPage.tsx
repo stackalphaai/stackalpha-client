@@ -36,7 +36,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { tradingApi } from "@/services/api"
 import { useAuthStore } from "@/stores/auth"
 import { showSuccessToast, showErrorToast } from "@/lib/api-error"
-import type { Trade } from "@/types"
+import { useOpenTrades } from "@/hooks/useOpenTrades"
+import { LiveTradeCard } from "@/components/trading/LiveTradeCard"
+import { PortfolioSummary } from "@/components/trading/PortfolioSummary"
+import type { Trade, LiveTradeData } from "@/types"
 
 export default function TradesPage() {
   const { user } = useAuthStore()
@@ -44,22 +47,24 @@ export default function TradesPage() {
   const openSubscription = useSubscriptionModal((s) => s.open)
   const [isLoading, setIsLoading] = useState(true)
   const [trades, setTrades] = useState<Trade[]>([])
-  const [openTrades, setOpenTrades] = useState<Trade[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null)
+  const [exchangeFilter, setExchangeFilter] = useState<string>("all")
+  const [selectedTrade, setSelectedTrade] = useState<Trade | LiveTradeData | null>(null)
   const [showCloseDialog, setShowCloseDialog] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
+
+  // Live WebSocket data for open trades
+  const { trades: liveTrades, summary, isConnected, priceChanges } = useOpenTrades()
 
   useEffect(() => {
     const fetchTrades = async () => {
       try {
-        const [tradesRes, openRes] = await Promise.all([
-          tradingApi.getTrades({ status: statusFilter === "all" ? undefined : statusFilter }),
-          tradingApi.getOpenTrades(),
-        ])
+        const tradesRes = await tradingApi.getTrades({
+          status: statusFilter === "all" ? undefined : statusFilter,
+          exchange: exchangeFilter === "all" ? undefined : exchangeFilter,
+        })
         setTrades(tradesRes.data.items || tradesRes.data)
-        setOpenTrades(openRes.data)
       } catch (error) {
         showErrorToast(error, "Failed to load trades")
       } finally {
@@ -68,7 +73,7 @@ export default function TradesPage() {
     }
 
     fetchTrades()
-  }, [statusFilter])
+  }, [statusFilter, exchangeFilter])
 
   const filteredTrades = trades.filter((trade) =>
     trade.symbol.toLowerCase().includes(searchQuery.toLowerCase())
@@ -83,18 +88,21 @@ export default function TradesPage() {
       showSuccessToast(`${selectedTrade.symbol} position closed successfully`)
       setShowCloseDialog(false)
 
-      // Refresh trades
-      const [tradesRes, openRes] = await Promise.all([
-        tradingApi.getTrades({ status: statusFilter === "all" ? undefined : statusFilter }),
-        tradingApi.getOpenTrades(),
-      ])
+      // Refresh all trades
+      const tradesRes = await tradingApi.getTrades({
+        status: statusFilter === "all" ? undefined : statusFilter,
+      })
       setTrades(tradesRes.data.items || tradesRes.data)
-      setOpenTrades(openRes.data)
     } catch (error) {
       showErrorToast(error, "Failed to close trade")
     } finally {
       setIsClosing(false)
     }
+  }
+
+  const handleLiveTradeClose = (trade: LiveTradeData) => {
+    setSelectedTrade(trade)
+    setShowCloseDialog(true)
   }
 
   const getStatusColor = (status: string) => {
@@ -137,9 +145,14 @@ export default function TradesPage() {
             </div>
             <div>
               <p className="font-medium">{trade.symbol}</p>
-              <Badge variant={trade.direction === "long" ? "long" : "short"} className="text-xs">
-                {trade.direction.toUpperCase()}
-              </Badge>
+              <div className="flex items-center gap-1">
+                <Badge variant={trade.direction === "long" ? "long" : "short"} className="text-xs">
+                  {trade.direction.toUpperCase()}
+                </Badge>
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                  {(trade.exchange || "hyperliquid") === "binance" ? "Binance" : "HL"}
+                </Badge>
+              </div>
             </div>
           </div>
           <Badge variant={getStatusColor(trade.status) as "success" | "warning" | "secondary" | "destructive"}>
@@ -225,6 +238,12 @@ export default function TradesPage() {
     )
   }
 
+  const selectedPnl = selectedTrade
+    ? "unrealized_pnl" in selectedTrade
+      ? selectedTrade.unrealized_pnl || 0
+      : 0
+    : 0
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -273,6 +292,16 @@ export default function TradesPage() {
               className="pl-9"
             />
           </div>
+          <Select value={exchangeFilter} onValueChange={setExchangeFilter}>
+            <SelectTrigger className="w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Exchanges</SelectItem>
+              <SelectItem value="hyperliquid">Hyperliquid</SelectItem>
+              <SelectItem value="binance">Binance</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-32">
               <Filter className="h-4 w-4 mr-2" />
@@ -289,13 +318,43 @@ export default function TradesPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="all">
+      <Tabs defaultValue="open">
         <TabsList>
-          <TabsTrigger value="all">All Trades</TabsTrigger>
           <TabsTrigger value="open">
-            Open ({openTrades.length})
+            Open ({summary.total_open})
           </TabsTrigger>
+          <TabsTrigger value="all">All Trades</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="open" className="mt-4 space-y-4">
+          {/* Portfolio Summary */}
+          <PortfolioSummary summary={summary} isConnected={isConnected} />
+
+          {liveTrades.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <p className="text-muted-foreground">No open trades</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {liveTrades.map((trade, index) => (
+                <motion.div
+                  key={trade.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <LiveTradeCard
+                    trade={trade}
+                    priceChange={priceChanges[trade.id]}
+                    onClose={handleLiveTradeClose}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
 
         <TabsContent value="all" className="mt-4">
           {filteredTrades.length === 0 ? (
@@ -307,29 +366,6 @@ export default function TradesPage() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredTrades.map((trade, index) => (
-                <motion.div
-                  key={trade.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <TradeCard trade={trade} />
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="open" className="mt-4">
-          {openTrades.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">No open trades</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {openTrades.map((trade, index) => (
                 <motion.div
                   key={trade.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -364,11 +400,11 @@ export default function TradesPage() {
                   <p className="text-muted-foreground">Unrealized P&L</p>
                   <p
                     className={`font-medium ${
-                      (selectedTrade.unrealized_pnl || 0) >= 0 ? "text-green-500" : "text-red-500"
+                      selectedPnl >= 0 ? "text-green-500" : "text-red-500"
                     }`}
                   >
-                    {(selectedTrade.unrealized_pnl || 0) >= 0 ? "+" : ""}
-                    ${(selectedTrade.unrealized_pnl || 0).toFixed(2)}
+                    {selectedPnl >= 0 ? "+" : ""}
+                    ${selectedPnl.toFixed(2)}
                   </p>
                 </div>
               </div>

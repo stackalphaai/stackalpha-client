@@ -37,13 +37,17 @@ export default function SignalsPage() {
   const [signals, setSignals] = useState<Signal[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [exchangeFilter, setExchangeFilter] = useState<string>("all")
 
   useEffect(() => {
     const fetchSignals = async () => {
       try {
-        const params: { status?: string } = {}
+        const params: { status?: string; exchange?: string } = {}
         if (statusFilter !== "all") {
           params.status = statusFilter
+        }
+        if (exchangeFilter !== "all") {
+          params.exchange = exchangeFilter
         }
         const response = await tradingApi.getSignals(params)
         setSignals(response.data.items || response.data)
@@ -55,7 +59,7 @@ export default function SignalsPage() {
     }
 
     fetchSignals()
-  }, [statusFilter])
+  }, [statusFilter, exchangeFilter])
 
   const filteredSignals = signals.filter((signal) =>
     signal.symbol.toLowerCase().includes(searchQuery.toLowerCase())
@@ -157,6 +161,16 @@ export default function SignalsPage() {
               className="pl-9"
             />
           </div>
+          <Select value={exchangeFilter} onValueChange={setExchangeFilter}>
+            <SelectTrigger className="w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Exchanges</SelectItem>
+              <SelectItem value="hyperliquid">Hyperliquid</SelectItem>
+              <SelectItem value="binance">Binance</SelectItem>
+            </SelectContent>
+          </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-32">
               <Filter className="h-4 w-4 mr-2" />
@@ -210,9 +224,14 @@ export default function SignalsPage() {
                       </div>
                       <div>
                         <CardTitle className="text-lg">{signal.symbol}</CardTitle>
-                        <Badge variant={signal.direction === "long" ? "long" : "short"}>
-                          {signal.direction.toUpperCase()}
-                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <Badge variant={signal.direction === "long" ? "long" : "short"}>
+                            {signal.direction.toUpperCase()}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {(signal.exchange || "hyperliquid") === "binance" ? "Binance" : "Hyperliquid"}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                     <Badge variant={getStatusColor(signal.status) as "success" | "info" | "warning" | "destructive" | "secondary"}>

@@ -38,6 +38,7 @@ export interface Wallet {
 export interface Signal {
   id: string
   symbol: string
+  exchange: string
   direction: "long" | "short"
   status: "pending" | "active" | "executed" | "expired" | "cancelled"
   outcome: "pending" | "tp_hit" | "sl_hit" | "manual_close" | "expired"
@@ -72,7 +73,9 @@ export interface SignalDetail extends Signal {
 export interface Trade {
   id: string
   user_id: string
-  wallet_id: string
+  wallet_id: string | null
+  exchange_connection_id: string | null
+  exchange: string
   signal_id: string | null
   symbol: string
   direction: "long" | "short"
@@ -92,6 +95,22 @@ export interface Trade {
   close_reason: string | null
   opened_at: string | null
   closed_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ExchangeConnection {
+  id: string
+  user_id: string
+  exchange_type: "binance"
+  label: string | null
+  is_testnet: boolean
+  is_trading_enabled: boolean
+  status: "active" | "inactive" | "error"
+  balance_usd: number | null
+  margin_used: number | null
+  unrealized_pnl: number | null
+  last_sync_at: string | null
   created_at: string
   updated_at: string
 }
@@ -188,6 +207,34 @@ export interface DailyPnL {
   date: string
   pnl: number
   trade_count: number
+}
+
+// Real-time WebSocket trade data
+export interface LiveTradeData {
+  id: string
+  symbol: string
+  exchange: string
+  direction: "long" | "short"
+  status: string
+  entry_price: number | null
+  current_price: number | null
+  take_profit_price: number | null
+  stop_loss_price: number | null
+  position_size: number
+  position_size_usd: number
+  leverage: number
+  unrealized_pnl: number
+  unrealized_pnl_percent: number
+  tp_distance_pct: number | null
+  sl_distance_pct: number | null
+  margin_used: number | null
+  opened_at: string | null
+}
+
+export interface TradesSummary {
+  total_open: number
+  total_unrealized_pnl: number
+  total_margin_used: number
 }
 
 export type Theme = "light" | "dark" | "system"

@@ -16,6 +16,7 @@ import {
   History,
   Shield,
   X,
+  ArrowLeftRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -43,6 +44,7 @@ const mainNavItems = [
   { icon: History, label: "Trades", href: "/trades" },
   { icon: TrendingUp, label: "Markets", href: "/markets" },
   { icon: Wallet, label: "Wallets", href: "/wallets" },
+  { icon: ArrowLeftRight, label: "Exchanges", href: "/exchanges" },
   { icon: BarChart3, label: "Analytics", href: "/analytics" },
   { icon: Shield, label: "Risk Management", href: "/risk-management" },
 ]

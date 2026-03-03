@@ -30,6 +30,9 @@ import { SignalsPage, SignalDetailPage, TradesPage, MarketsPage } from "@/pages/
 // Wallet
 import { WalletsPage } from "@/pages/wallet"
 
+// Exchanges
+import { ExchangesPage } from "@/pages/exchanges"
+
 // Subscription
 import { SubscriptionPage, SubscriptionSuccessPage, SubscriptionCancelPage } from "@/pages/subscription"
 
@@ -142,6 +145,7 @@ function App() {
             <Route path="/trades" element={<TradesPage />} />
             <Route path="/markets" element={<MarketsPage />} />
             <Route path="/wallets" element={<WalletsPage />} />
+            <Route path="/exchanges" element={<ExchangesPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/subscription" element={<SubscriptionPage />} />
             <Route path="/subscription/success" element={<SubscriptionSuccessPage />} />

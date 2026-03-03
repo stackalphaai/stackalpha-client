@@ -159,24 +159,25 @@ export const walletApi = {
 
 // Trading API
 export const tradingApi = {
-  getSignals: (params?: { page?: number; symbol?: string; status?: string }) =>
+  getSignals: (params?: { page?: number; symbol?: string; status?: string; exchange?: string }) =>
     api.get("/v1/trading/signals", { params }),
   getActiveSignals: () => api.get("/v1/trading/signals/active"),
   getSignal: (id: string) => api.get(`/v1/trading/signals/${id}`),
   executeSignal: (
     signalId: string,
-    walletId: string,
-    positionSizePercent?: number,
-    leverage?: number
+    data: {
+      wallet_id?: string
+      exchange_connection_id?: string
+      position_size_percent?: number
+      leverage?: number
+    }
   ) =>
     api.post(`/v1/trading/signals/${signalId}/execute`, {
       signal_id: signalId,
-      wallet_id: walletId,
-      position_size_percent: positionSizePercent,
-      leverage,
+      ...data,
     }),
 
-  getTrades: (params?: { page?: number; symbol?: string; status?: string }) =>
+  getTrades: (params?: { page?: number; symbol?: string; status?: string; exchange?: string }) =>
     api.get("/v1/trading/trades", { params }),
   getOpenTrades: () => api.get("/v1/trading/trades/open"),
   getTrade: (id: string) => api.get(`/v1/trading/trades/${id}`),
@@ -195,6 +196,24 @@ export const tradingApi = {
   getMarkets: () => api.get("/v1/trading/markets"),
   getMarket: (symbol: string) => api.get(`/v1/trading/markets/${symbol}`),
   getSignalStats: () => api.get("/v1/trading/signal-stats"),
+}
+
+// Exchange API
+export const exchangeApi = {
+  getConnections: () => api.get("/v1/exchanges"),
+  connect: (data: {
+    exchange_type: string
+    api_key: string
+    api_secret: string
+    is_testnet?: boolean
+    label?: string
+  }) => api.post("/v1/exchanges/connect", data),
+  getConnection: (id: string) => api.get(`/v1/exchanges/${id}`),
+  getBalance: (id: string) => api.get(`/v1/exchanges/${id}/balance`),
+  toggleTrading: (id: string, enabled: boolean) =>
+    api.patch(`/v1/exchanges/${id}/trading`, { enabled }),
+  syncBalance: (id: string) => api.post(`/v1/exchanges/${id}/sync`),
+  disconnect: (id: string) => api.delete(`/v1/exchanges/${id}`),
 }
 
 // Subscription API
