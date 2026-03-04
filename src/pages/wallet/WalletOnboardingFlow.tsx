@@ -56,14 +56,14 @@ const steps = [
     num: 2,
     title: "Choose Your Wallet Type",
     description:
-      "Connect an existing Master Wallet using your Hyperliquid address, or let StackAlpha generate a managed API Wallet for fully automated trading.",
+      "Connect an Agent Wallet that trades on behalf of your master wallet, or connect an API Wallet for direct trading access.",
     icon: Wallet,
   },
   {
     num: 3,
-    title: "Authorize & Verify",
+    title: "Provide Your Credentials",
     description:
-      "Sign a message to authorize StackAlpha to read your balances and place trades on your behalf. We can never withdraw your funds.",
+      "Enter your wallet address and private key. Your key is encrypted and stored securely — it is only used to sign trades on Hyperliquid.",
     icon: Shield,
   },
   {
@@ -77,26 +77,26 @@ const steps = [
 
 const walletTypes = [
   {
-    type: "Master Wallet",
-    icon: Wallet,
-    badge: "Full Custody",
-    points: [
-      "Your own Hyperliquid wallet",
-      "You hold your private keys",
-      "Connect by pasting your address",
-    ],
-    bestFor: "Experienced traders",
-  },
-  {
-    type: "API Wallet (Agent)",
+    type: "Agent Wallet",
     icon: Bot,
-    badge: "Automated",
+    badge: "Recommended",
     points: [
       "Trades on behalf of your master wallet",
       "Your funds stay in your own wallet",
-      "Approve via Hyperliquid API page",
+      "Revocable agent access via Hyperliquid",
     ],
-    bestFor: "Hands-off trading",
+    bestFor: "Secure automated trading",
+  },
+  {
+    type: "API Wallet",
+    icon: Wallet,
+    badge: "Direct Access",
+    points: [
+      "Connect your wallet directly",
+      "No agent approval needed",
+      "Trading enabled immediately",
+    ],
+    bestFor: "Quick setup",
   },
 ]
 
@@ -294,7 +294,7 @@ export function WalletOnboardingFlow({ onConnectWallet }: WalletOnboardingFlowPr
             <ArrowRight className="h-4 w-4" />
           </Button>
           <p className="text-xs text-muted-foreground">
-            No private keys required for Master Wallets. Your funds stay in your control.
+            Your private keys are encrypted and stored securely. Your funds stay in your control.
           </p>
         </motion.div>
       </div>

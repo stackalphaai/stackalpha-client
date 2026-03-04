@@ -14,7 +14,6 @@ import {
   Shield,
   Eye,
   EyeOff,
-  Download,
   AlertTriangle,
   ExternalLink,
 } from "lucide-react"
@@ -50,28 +49,26 @@ import { showSuccessToast, showErrorToast, showWarningToast } from "@/lib/api-er
 import { WalletOnboardingFlow } from "./WalletOnboardingFlow"
 import type { Wallet as WalletType } from "@/types"
 
-interface GeneratedWallet {
-  address: string
-  master_address: string
-  private_key: string
-}
-
 export default function WalletsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [wallets, setWallets] = useState<WalletType[]>([])
   const [showConnectDialog, setShowConnectDialog] = useState(false)
-  const [walletAddress, setWalletAddress] = useState("")
   const [isConnecting, setIsConnecting] = useState(false)
-  const [isGenerating, setIsGenerating] = useState(false)
   const [syncingWalletId, setSyncingWalletId] = useState<string | null>(null)
-  const [generatedWallet, setGeneratedWallet] = useState<GeneratedWallet | null>(null)
-  const [showKeyRevealed, setShowKeyRevealed] = useState(false)
-  const [keySavedConfirmed, setKeySavedConfirmed] = useState(false)
   const [showDisconnected, setShowDisconnected] = useState(false)
   const [walletToDisconnect, setWalletToDisconnect] = useState<string | null>(null)
-  const [showCloseKeyWarning, setShowCloseKeyWarning] = useState(false)
-  const [masterAddressForApi, setMasterAddressForApi] = useState("")
   const [verifyingWalletId, setVerifyingWalletId] = useState<string | null>(null)
+
+  // Agent wallet form
+  const [agentAddress, setAgentAddress] = useState("")
+  const [agentPrivateKey, setAgentPrivateKey] = useState("")
+  const [agentMasterAddress, setAgentMasterAddress] = useState("")
+  const [showAgentKey, setShowAgentKey] = useState(false)
+
+  // API wallet form
+  const [apiAddress, setApiAddress] = useState("")
+  const [apiPrivateKey, setApiPrivateKey] = useState("")
+  const [showApiKey, setShowApiKey] = useState(false)
 
   const fetchWallets = async () => {
     try {
@@ -88,44 +85,53 @@ export default function WalletsPage() {
     fetchWallets()
   }, [])
 
-  const handleConnectWallet = async () => {
-    if (!walletAddress) {
-      showWarningToast("Please enter a wallet address")
+  const resetForms = () => {
+    setAgentAddress("")
+    setAgentPrivateKey("")
+    setAgentMasterAddress("")
+    setShowAgentKey(false)
+    setApiAddress("")
+    setApiPrivateKey("")
+    setShowApiKey(false)
+  }
+
+  const handleConnectAgentWallet = async () => {
+    if (!agentAddress || !agentPrivateKey || !agentMasterAddress) {
+      showWarningToast("Please fill in all fields")
       return
     }
 
     setIsConnecting(true)
     try {
-      await walletApi.connectWallet(walletAddress)
-      showSuccessToast("Wallet connected! Please authorize it to enable trading.")
+      await walletApi.connectAgentWallet(agentAddress, agentPrivateKey, agentMasterAddress)
+      showSuccessToast("Agent wallet connected! Verify agent approval to enable trading.")
       setShowConnectDialog(false)
-      setWalletAddress("")
+      resetForms()
       fetchWallets()
     } catch (error) {
-      showErrorToast(error, "Failed to connect wallet")
+      showErrorToast(error, "Failed to connect agent wallet")
     } finally {
       setIsConnecting(false)
     }
   }
 
-  const handleGenerateApiWallet = async () => {
-    if (!masterAddressForApi) {
-      showWarningToast("Please enter your Hyperliquid master wallet address")
+  const handleConnectApiWallet = async () => {
+    if (!apiAddress || !apiPrivateKey) {
+      showWarningToast("Please fill in all fields")
       return
     }
-    setIsGenerating(true)
+
+    setIsConnecting(true)
     try {
-      const response = await walletApi.generateApiWallet(masterAddressForApi)
-      setGeneratedWallet(response.data)
+      await walletApi.connectApiWallet(apiAddress, apiPrivateKey)
+      showSuccessToast("API wallet connected! Trading is now enabled.")
       setShowConnectDialog(false)
-      setMasterAddressForApi("")
-      setShowKeyRevealed(false)
-      setKeySavedConfirmed(false)
+      resetForms()
       fetchWallets()
     } catch (error) {
-      showErrorToast(error, "Failed to generate API wallet")
+      showErrorToast(error, "Failed to connect API wallet")
     } finally {
-      setIsGenerating(false)
+      setIsConnecting(false)
     }
   }
 
@@ -144,127 +150,6 @@ export default function WalletsPage() {
     } finally {
       setVerifyingWalletId(null)
     }
-  }
-
-  const handleDownloadKey = () => {
-    if (!generatedWallet) return
-    const content = [
-      "============================================================",
-      "  StackAlpha API Wallet - KEEP THIS FILE SECURE",
-      "============================================================",
-      "",
-      `Agent Wallet Address: ${generatedWallet.address}`,
-      `Master Wallet:       ${generatedWallet.master_address}`,
-      `Private Key:         ${generatedWallet.private_key}`,
-      "",
-      "",
-      "------------------------------------------------------------",
-      "  IMPORTANT SECURITY NOTES",
-      "------------------------------------------------------------",
-      "",
-      "- This private key gives FULL access to this wallet.",
-      "- Never share this key with anyone.",
-      "- Store this file in a secure location (password manager,",
-      "  encrypted drive, or written down offline).",
-      "- Delete this file after saving the key somewhere secure.",
-      "- StackAlpha CANNOT withdraw or transfer your funds.",
-      "  The key is only used to place and close trades on",
-      "  Hyperliquid on your behalf.",
-      "",
-      "",
-      "------------------------------------------------------------",
-      "  HOW TO ENABLE TRADING",
-      "------------------------------------------------------------",
-      "",
-      "1. Go to https://app.hyperliquid.xyz/API",
-      "2. Approve the Agent Wallet Address above as an",
-      "   authorized agent for your master wallet.",
-      "3. Return to StackAlpha and click 'Verify Approval'.",
-      "4. Once verified, StackAlpha will execute trades using",
-      "   your master wallet's funds.",
-      "",
-      "",
-      "------------------------------------------------------------",
-      "  HOW TO IMPORT YOUR WALLET INTO A WALLET APP",
-      "  (for backup & direct access to your funds)",
-      "------------------------------------------------------------",
-      "",
-      "You can import this private key into any Ethereum-compatible",
-      "wallet app to directly access and manage your funds.",
-      "",
-      "",
-      "MetaMask (Browser Extension / Mobile App):",
-      "",
-      "  1. Open MetaMask and click your account icon (top-right).",
-      "  2. Select 'Add account or hardware wallet'.",
-      "  3. Choose 'Import account'.",
-      "  4. Select 'Private Key' as the type.",
-      "  5. Paste your Private Key from above and click 'Import'.",
-      "  6. Switch the network to 'Arbitrum One' to see your USDC.",
-      "",
-      "",
-      "Trust Wallet (Mobile App):",
-      "",
-      "  1. Open Trust Wallet and tap the Settings icon.",
-      "  2. Go to 'Wallets' and tap the '+' button.",
-      "  3. Select 'I already have a wallet'.",
-      "  4. Choose 'Ethereum' (or Multi-Coin).",
-      "  5. Select 'Private Key' tab and paste your key.",
-      "  6. Tap 'Import' and switch to the Arbitrum network",
-      "     to view your assets.",
-      "",
-      "",
-      "Phantom (Browser Extension / Mobile App):",
-      "",
-      "  1. Open Phantom and click the menu (top-left hamburger).",
-      "  2. Go to 'Settings' > 'Manage Accounts'.",
-      "  3. Tap 'Add / Connect Wallet'.",
-      "  4. Select 'Import Private Key'.",
-      "  5. Choose 'Ethereum' as the network.",
-      "  6. Paste your Private Key and tap 'Import'.",
-      "",
-      "",
-      "Rabby Wallet (Browser Extension):",
-      "",
-      "  1. Open Rabby and click 'Add Address'.",
-      "  2. Select 'Import Private Key'.",
-      "  3. Paste your key and click 'Confirm'.",
-      "  4. Your Arbitrum assets will appear automatically.",
-      "",
-      "",
-      "============================================================",
-      `  Generated: ${new Date().toISOString()}`,
-      "  By: StackAlpha (stackalpha.xyz)",
-      "============================================================",
-    ].join("\n")
-
-    const blob = new Blob([content], { type: "text/plain" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `stackalpha-wallet-${generatedWallet.address.slice(0, 8)}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-    toast.success("Wallet key file downloaded")
-  }
-
-  const handleCloseSecretDialog = () => {
-    if (!keySavedConfirmed) {
-      setShowCloseKeyWarning(true)
-      return
-    }
-    setGeneratedWallet(null)
-    setShowKeyRevealed(false)
-    setKeySavedConfirmed(false)
-  }
-
-  const handleForceCloseSecretDialog = () => {
-    setShowCloseKeyWarning(false)
-    setGeneratedWallet(null)
-    setShowKeyRevealed(false)
-    setKeySavedConfirmed(false)
   }
 
   const handleSyncWallet = async (walletId: string) => {
@@ -324,7 +209,7 @@ export default function WalletsPage() {
   const activeWallets = wallets.filter((w) => w.status !== "disconnected")
   const disconnectedWallets = wallets.filter((w) => w.status === "disconnected")
   const visibleWallets = showDisconnected ? wallets : activeWallets
-  const masterWallets = visibleWallets.filter((w) => w.wallet_type === "master")
+  const agentWallets = visibleWallets.filter((w) => w.wallet_type === "agent")
   const apiWallets = visibleWallets.filter((w) => w.wallet_type === "api")
 
   if (isLoading) {
@@ -358,7 +243,7 @@ export default function WalletsPage() {
                 {wallet.status}
               </Badge>
               <p className="text-xs text-muted-foreground mt-1">
-                {wallet.wallet_type === "master" ? "Master Wallet" : "API Wallet"}
+                {wallet.wallet_type === "agent" ? "Agent Wallet" : "API Wallet"}
               </p>
             </div>
           </div>
@@ -388,7 +273,7 @@ export default function WalletsPage() {
         <div className="space-y-3">
           <div>
             <p className="text-xs text-muted-foreground">
-              {wallet.wallet_type === "api" ? "Agent Address" : "Address"}
+              {wallet.wallet_type === "agent" ? "Agent Address" : "Address"}
             </p>
             <p className="font-mono text-sm truncate">{wallet.address}</p>
           </div>
@@ -429,8 +314,8 @@ export default function WalletsPage() {
             </div>
           )}
 
-          {/* Agent Approval for API wallets */}
-          {wallet.wallet_type === "api" && !wallet.is_agent_approved && (
+          {/* Agent Approval for agent wallets */}
+          {wallet.wallet_type === "agent" && !wallet.is_agent_approved && (
             <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 space-y-2">
               <div className="flex items-start gap-2">
                 <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
@@ -482,7 +367,7 @@ export default function WalletsPage() {
                   Not Authorized
                 </Badge>
               )}
-              {wallet.wallet_type === "api" && wallet.is_agent_approved && (
+              {wallet.wallet_type === "agent" && wallet.is_agent_approved && (
                 <Badge variant="success" className="gap-1">
                   <Shield className="h-3 w-3" />
                   Agent Approved
@@ -535,62 +420,75 @@ export default function WalletsPage() {
           <h1 className="text-2xl font-bold">Wallets</h1>
           <p className="text-muted-foreground">Manage your Hyperliquid wallets</p>
         </div>
-        <Dialog open={showConnectDialog} onOpenChange={setShowConnectDialog}>
+        <Dialog open={showConnectDialog} onOpenChange={(open) => { setShowConnectDialog(open); if (!open) resetForms() }}>
           <DialogTrigger asChild>
             <Button variant="gradient">
               <Plus className="h-4 w-4 mr-2" />
               Connect Wallet
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>Connect Wallet</DialogTitle>
               <DialogDescription>
                 Connect your Hyperliquid wallet to start trading
               </DialogDescription>
             </DialogHeader>
-            <Tabs defaultValue="connect">
+            <Tabs defaultValue="agent">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="connect">Connect Existing</TabsTrigger>
-                <TabsTrigger value="generate">Generate API</TabsTrigger>
+                <TabsTrigger value="agent">Agent Wallet</TabsTrigger>
+                <TabsTrigger value="api">API Wallet</TabsTrigger>
               </TabsList>
-              <TabsContent value="connect" className="space-y-4 pt-4">
+              <TabsContent value="agent" className="space-y-4 pt-4">
+                <div className="p-3 rounded-lg bg-muted/50 space-y-1">
+                  <p className="text-sm font-medium">How Agent Wallets Work</p>
+                  <p className="text-xs text-muted-foreground">
+                    An agent wallet trades on behalf of your master wallet. Your funds stay in
+                    your master wallet — the agent only has permission to place trades.
+                    You must approve the agent on{" "}
+                    <a href="https://app.hyperliquid.xyz/API" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                      app.hyperliquid.xyz/API
+                    </a>{" "}
+                    before trading can begin.
+                  </p>
+                </div>
                 <div className="space-y-2">
-                  <Label>Wallet Address</Label>
+                  <Label>Agent Wallet Address</Label>
                   <Input
                     placeholder="0x..."
-                    value={walletAddress}
-                    onChange={(e) => setWalletAddress(e.target.value)}
+                    value={agentAddress}
+                    onChange={(e) => setAgentAddress(e.target.value)}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Enter your Hyperliquid wallet address
-                  </p>
                 </div>
-                <Button
-                  variant="gradient"
-                  className="w-full"
-                  onClick={handleConnectWallet}
-                  disabled={isConnecting}
-                >
-                  {isConnecting ? "Connecting..." : "Connect Wallet"}
-                </Button>
-              </TabsContent>
-              <TabsContent value="generate" className="space-y-4 pt-4">
-                <div className="p-4 rounded-lg bg-muted/50 space-y-2">
-                  <p className="text-sm">
-                    Generate an API wallet (agent) linked to your Hyperliquid master wallet.
-                    The agent signs trades on behalf of your master account.
-                  </p>
+                <div className="space-y-2">
+                  <Label>Agent Private Key</Label>
+                  <div className="relative">
+                    <Input
+                      type={showAgentKey ? "text" : "password"}
+                      placeholder="Enter agent wallet private key"
+                      value={agentPrivateKey}
+                      onChange={(e) => setAgentPrivateKey(e.target.value)}
+                      className="pr-10"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full"
+                      onClick={() => setShowAgentKey(!showAgentKey)}
+                    >
+                      {showAgentKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    Your funds stay in your master wallet. The API wallet only has permission to trade.
+                    Your private key is encrypted and stored securely. It is only used to sign trades.
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label>Your Hyperliquid Master Address</Label>
+                  <Label>Master Wallet Address</Label>
                   <Input
                     placeholder="0x..."
-                    value={masterAddressForApi}
-                    onChange={(e) => setMasterAddressForApi(e.target.value)}
+                    value={agentMasterAddress}
+                    onChange={(e) => setAgentMasterAddress(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground">
                     The address of your funded Hyperliquid wallet
@@ -599,10 +497,59 @@ export default function WalletsPage() {
                 <Button
                   variant="gradient"
                   className="w-full"
-                  onClick={handleGenerateApiWallet}
-                  disabled={isGenerating || !masterAddressForApi}
+                  onClick={handleConnectAgentWallet}
+                  disabled={isConnecting || !agentAddress || !agentPrivateKey || !agentMasterAddress}
                 >
-                  {isGenerating ? "Generating..." : "Generate API Wallet"}
+                  {isConnecting ? "Connecting..." : "Connect Agent Wallet"}
+                </Button>
+              </TabsContent>
+              <TabsContent value="api" className="space-y-4 pt-4">
+                <div className="p-3 rounded-lg bg-muted/50 space-y-1">
+                  <p className="text-sm font-medium">How API Wallets Work</p>
+                  <p className="text-xs text-muted-foreground">
+                    Connect your Hyperliquid wallet directly using its private key.
+                    StackAlpha will trade directly on this wallet. No agent approval needed —
+                    trading is enabled immediately.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Wallet Address</Label>
+                  <Input
+                    placeholder="0x..."
+                    value={apiAddress}
+                    onChange={(e) => setApiAddress(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Private Key</Label>
+                  <div className="relative">
+                    <Input
+                      type={showApiKey ? "text" : "password"}
+                      placeholder="Enter wallet private key"
+                      value={apiPrivateKey}
+                      onChange={(e) => setApiPrivateKey(e.target.value)}
+                      className="pr-10"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                    >
+                      {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Your private key is encrypted and stored securely. It is only used to sign trades.
+                  </p>
+                </div>
+                <Button
+                  variant="gradient"
+                  className="w-full"
+                  onClick={handleConnectApiWallet}
+                  disabled={isConnecting || !apiAddress || !apiPrivateKey}
+                >
+                  {isConnecting ? "Connecting..." : "Connect API Wallet"}
                 </Button>
               </TabsContent>
             </Tabs>
@@ -636,11 +583,11 @@ export default function WalletsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {masterWallets.length > 0 && (
+          {agentWallets.length > 0 && (
             <div>
-              <h2 className="text-lg font-semibold mb-4">Master Wallets</h2>
+              <h2 className="text-lg font-semibold mb-4">Agent Wallets</h2>
               <div className="grid gap-4 md:grid-cols-2">
-                {masterWallets.map((wallet) => (
+                {agentWallets.map((wallet) => (
                   <WalletCard key={wallet.id} wallet={wallet} />
                 ))}
               </div>
@@ -680,176 +627,6 @@ export default function WalletsPage() {
         </div>
       )}
 
-      {/* Generated Wallet Secret Key Dialog */}
-      <Dialog open={!!generatedWallet} onOpenChange={(open) => { if (!open) handleCloseSecretDialog() }}>
-        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto" onInteractOutside={(e) => e.preventDefault()}>
-          <DialogHeader>
-            <div className="flex items-center gap-3 mb-1">
-              <div className="h-10 w-10 rounded-xl bg-green-500/20 flex items-center justify-center">
-                <CheckCircle className="h-5 w-5 text-green-500" />
-              </div>
-              <div>
-                <DialogTitle>Wallet Generated Successfully</DialogTitle>
-                <DialogDescription>
-                  Save your private key now — it will not be shown again
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-
-          <div className="space-y-5">
-            {/* Critical Warning */}
-            <div className="flex gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-              <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-              <div className="text-sm">
-                <p className="font-semibold text-destructive">This is the only time your private key will be displayed.</p>
-                <p className="text-muted-foreground mt-1">
-                  If you lose it, you will lose access to any funds in this wallet.
-                  StackAlpha cannot recover it for you.
-                </p>
-              </div>
-            </div>
-
-            {/* Wallet Address */}
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Wallet Address</Label>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 p-2.5 rounded-lg bg-muted font-mono text-sm break-all">
-                  {generatedWallet?.address}
-                </code>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0"
-                  onClick={() => {
-                    if (generatedWallet) {
-                      navigator.clipboard.writeText(generatedWallet.address)
-                      toast.success("Address copied")
-                    }
-                  }}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Private Key */}
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Private Key (Secret)</Label>
-              <div className="relative">
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 p-2.5 rounded-lg bg-muted font-mono text-sm break-all select-all">
-                    {showKeyRevealed
-                      ? generatedWallet?.private_key
-                      : "\u2022".repeat(48)}
-                  </code>
-                  <div className="flex flex-col gap-1 shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowKeyRevealed(!showKeyRevealed)}
-                    >
-                      {showKeyRevealed ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        if (generatedWallet) {
-                          navigator.clipboard.writeText(generatedWallet.private_key)
-                          toast.success("Private key copied to clipboard")
-                        }
-                      }}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Download Button */}
-            <Button
-              variant="outline"
-              className="w-full gap-2"
-              onClick={handleDownloadKey}
-            >
-              <Download className="h-4 w-4" />
-              Download Key File
-            </Button>
-
-            {/* Security Info */}
-            <div className="space-y-3 p-4 rounded-lg bg-muted/50 border">
-              <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">Security & Custody Information</span>
-              </div>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
-                  <span><strong>Your funds, your control.</strong> This is an agent wallet — it can only place trades on behalf of your master wallet. It cannot withdraw or transfer your funds.</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
-                  <span><strong>Agent approval required.</strong> You must approve this agent on app.hyperliquid.xyz/API before StackAlpha can trade on your behalf.</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
-                  <span><strong>Revocable at any time.</strong> You can revoke agent access from Hyperliquid at any time to stop automated trading.</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <AlertTriangle className="h-3.5 w-3.5 text-yellow-500 mt-0.5 shrink-0" />
-                  <span><strong>Never share your private key</strong> with anyone. Anyone who has it can access your wallet funds.</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Next Steps */}
-            <div className="space-y-2 p-4 rounded-lg border border-primary/20 bg-primary/5">
-              <span className="text-sm font-semibold">Next Steps</span>
-              <ol className="space-y-1.5 text-sm text-muted-foreground list-decimal list-inside">
-                <li>Save your private key in a secure location (password manager recommended)</li>
-                <li>
-                  Go to{" "}
-                  <a
-                    href="https://app.hyperliquid.xyz/API"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary underline"
-                  >
-                    app.hyperliquid.xyz/API
-                  </a>{" "}
-                  and approve this agent wallet address as an authorized agent
-                </li>
-                <li>Come back and click "Verify Approval" on the wallet card</li>
-                <li>Once verified, StackAlpha will execute AI-powered trades using your master wallet's funds</li>
-              </ol>
-            </div>
-
-            {/* Confirmation + Close */}
-            <div className="space-y-3 pt-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={keySavedConfirmed}
-                  onChange={(e) => setKeySavedConfirmed(e.target.checked)}
-                  className="rounded border-muted-foreground/30"
-                />
-                <span className="text-sm">I have saved my private key in a secure location</span>
-              </label>
-              <Button
-                variant="gradient"
-                className="w-full"
-                disabled={!keySavedConfirmed}
-                onClick={handleCloseSecretDialog}
-              >
-                I've Saved My Key — Continue
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* Disconnect Wallet Confirmation */}
       <AlertDialog open={!!walletToDisconnect} onOpenChange={(open) => !open && setWalletToDisconnect(null)}>
         <AlertDialogContent>
@@ -866,27 +643,6 @@ export default function WalletsPage() {
               onClick={() => walletToDisconnect && handleDisconnectWallet(walletToDisconnect)}
             >
               Disconnect
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Close Secret Key Warning */}
-      <AlertDialog open={showCloseKeyWarning} onOpenChange={setShowCloseKeyWarning}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              You will NOT be able to see this private key again. Make sure you have saved it securely before closing.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Go Back</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={handleForceCloseSecretDialog}
-            >
-              Close Anyway
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

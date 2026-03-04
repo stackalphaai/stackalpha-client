@@ -21,7 +21,7 @@ export interface Wallet {
   id: string
   user_id: string
   address: string
-  wallet_type: "master" | "api"
+  wallet_type: "agent" | "api"
   status: "pending" | "active" | "disconnected" | "suspended"
   master_address: string | null
   is_trading_enabled: boolean

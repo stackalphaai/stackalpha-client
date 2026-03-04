@@ -133,14 +133,10 @@ export const userApi = {
 // Wallet API
 export const walletApi = {
   getWallets: () => api.get("/v1/wallets"),
-  connectWallet: (address: string) =>
-    api.post("/v1/wallets/connect", { address }),
-  authorizeWallet: (walletId: string, signature: string, message: string) =>
-    api.post(`/v1/wallets/${walletId}/authorize`, { signature, message }),
-  getAuthMessage: (walletId: string) =>
-    api.get(`/v1/wallets/${walletId}/auth-message`),
-  generateApiWallet: (masterAddress: string) =>
-    api.post("/v1/wallets/generate-api-wallet", { master_address: masterAddress }),
+  connectAgentWallet: (address: string, privateKey: string, masterAddress: string) =>
+    api.post("/v1/wallets/connect-agent", { address, private_key: privateKey, master_address: masterAddress }),
+  connectApiWallet: (address: string, privateKey: string) =>
+    api.post("/v1/wallets/connect-api", { address, private_key: privateKey }),
   verifyAgentApproval: (walletId: string) =>
     api.post(`/v1/wallets/${walletId}/verify-agent`),
   getBalance: (walletId: string) =>
