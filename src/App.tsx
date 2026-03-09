@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { MainLayout } from "@/components/layout/MainLayout"
 import { AuthLayout } from "@/components/layout/AuthLayout"
 import { Toaster } from "@/components/ui/sonner"
@@ -111,6 +112,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <TooltipProvider delayDuration={300}>
       <BrowserRouter>
         <Routes>
           {/* Home/Landing page - always accessible */}
@@ -173,6 +175,7 @@ function App() {
         <Toaster />
         <SubscriptionModal />
       </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
   )
 }

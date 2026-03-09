@@ -20,7 +20,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from "recharts"
 
@@ -28,6 +28,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { TopGainers } from "@/components/features/TopGainers"
 import { analyticsApi, tradingApi, walletApi } from "@/services/api"
 import { useAuthStore } from "@/stores/auth"
@@ -105,6 +106,7 @@ export default function DashboardPage() {
   const stats = [
     {
       title: "Total Balance",
+      tooltip: "Combined USD balance across all connected wallets",
       value: `$${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       change: totalBalance > 0 ? "Connected" : "No wallets",
       trend: (totalBalance > 0 ? "up" : "neutral") as "up" | "down" | "neutral",
@@ -112,6 +114,7 @@ export default function DashboardPage() {
     },
     {
       title: "Active Signals",
+      tooltip: "AI-generated trading opportunities currently available to execute",
       value: activeSignals.length.toString(),
       change: activeSignals.length > 0 ? "Live now" : "None active",
       trend: (activeSignals.length > 0 ? "up" : "neutral") as "up" | "down" | "neutral",
@@ -119,6 +122,7 @@ export default function DashboardPage() {
     },
     {
       title: "Win Rate",
+      tooltip: "Percentage of closed trades that were profitable (last 30 days)",
       value: analytics ? `${analytics.win_rate.toFixed(1)}%` : "0%",
       change: analytics && analytics.win_rate > 50 ? "Above avg" : "Below avg",
       trend: winTrend,
@@ -126,6 +130,7 @@ export default function DashboardPage() {
     },
     {
       title: "Total P&L",
+      tooltip: "Cumulative realized profit & loss across all closed trades (last 30 days)",
       value: analytics ? `$${analytics.total_pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "$0.00",
       change: analytics && analytics.total_pnl > 0 ? "Profit" : analytics && analytics.total_pnl < 0 ? "Loss" : "No trades",
       trend: pnlTrend,
@@ -215,38 +220,43 @@ export default function DashboardPage() {
         className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
       >
         {stats.map((stat) => (
-          <Card key={stat.title} className="relative overflow-hidden">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{stat.title}</p>
-                  <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
-                  <div className="flex items-center mt-1">
-                    {stat.trend === "up" && (
-                      <ArrowUpRight className="h-4 w-4 text-green-500 mr-1" />
-                    )}
-                    {stat.trend === "down" && (
-                      <ArrowDownRight className="h-4 w-4 text-red-500 mr-1" />
-                    )}
-                    <span
-                      className={`text-xs ${
-                        stat.trend === "up"
-                          ? "text-green-500"
-                          : stat.trend === "down"
-                          ? "text-red-500"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      {stat.change}
-                    </span>
+          <Tooltip key={stat.title}>
+            <TooltipTrigger asChild>
+              <Card className="relative overflow-hidden cursor-default">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">{stat.title}</p>
+                      <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
+                      <div className="flex items-center mt-1">
+                        {stat.trend === "up" && (
+                          <ArrowUpRight className="h-4 w-4 text-green-500 mr-1" />
+                        )}
+                        {stat.trend === "down" && (
+                          <ArrowDownRight className="h-4 w-4 text-red-500 mr-1" />
+                        )}
+                        <span
+                          className={`text-xs ${
+                            stat.trend === "up"
+                              ? "text-green-500"
+                              : stat.trend === "down"
+                              ? "text-red-500"
+                              : "text-muted-foreground"
+                          }`}
+                        >
+                          {stat.change}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <stat.icon className="h-6 w-6 text-primary" />
+                    </div>
                   </div>
-                </div>
-                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <stat.icon className="h-6 w-6 text-primary" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </TooltipTrigger>
+            <TooltipContent>{stat.tooltip}</TooltipContent>
+          </Tooltip>
         ))}
       </motion.div>
 
@@ -279,7 +289,7 @@ export default function DashboardPage() {
                       tickFormatter={(value) => `$${value}`}
                       className="text-xs text-muted-foreground"
                     />
-                    <Tooltip
+                    <RechartsTooltip
                       contentStyle={{
                         backgroundColor: "hsl(var(--card))",
                         border: "1px solid hsl(var(--border))",
@@ -352,12 +362,17 @@ export default function DashboardPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium text-green-500">
-                          {signal.confidence_score}%
-                        </p>
-                        <p className="text-xs text-muted-foreground">Confidence</p>
-                      </div>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="text-right cursor-default">
+                            <p className="font-medium text-green-500">
+                              {signal.confidence_score}%
+                            </p>
+                            <p className="text-xs text-muted-foreground">Confidence</p>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>AI model confidence in this signal</TooltipContent>
+                      </Tooltip>
                     </div>
                   ))
                 )}
@@ -406,14 +421,19 @@ export default function DashboardPage() {
                             {trade.direction.toUpperCase()}
                           </Badge>
                         </div>
-                        <span
-                          className={`font-medium text-sm ${
-                            (trade.unrealized_pnl || 0) >= 0 ? "text-green-500" : "text-red-500"
-                          }`}
-                        >
-                          {(trade.unrealized_pnl || 0) >= 0 ? "+" : ""}
-                          ${(trade.unrealized_pnl || 0).toFixed(2)}
-                        </span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              className={`font-medium text-sm cursor-default ${
+                                (trade.unrealized_pnl || 0) >= 0 ? "text-green-500" : "text-red-500"
+                              }`}
+                            >
+                              {(trade.unrealized_pnl || 0) >= 0 ? "+" : ""}
+                              ${(trade.unrealized_pnl || 0).toFixed(2)}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>Estimated profit/loss if this trade closed at current price</TooltipContent>
+                        </Tooltip>
                       </div>
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>Entry: ${trade.entry_price?.toLocaleString() || "-"}</span>

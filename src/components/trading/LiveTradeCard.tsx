@@ -8,6 +8,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import type { LiveTradeData } from "@/types"
 
 interface LiveTradeCardProps {
@@ -71,22 +72,34 @@ export function LiveTradeCard({ trade, priceChange, onClose }: LiveTradeCardProp
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                   {trade.exchange === "binance" ? "Binance" : "HL"}
                 </Badge>
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                  {trade.leverage}x
-                </Badge>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 cursor-default">
+                      {trade.leverage}x
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {trade.leverage}x leverage — both profit and loss are multiplied by {trade.leverage}
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
           </div>
 
           {/* Live PnL */}
-          <div className={`text-right px-2 py-1 rounded-md ${pnlBg}`}>
-            <p className={`text-sm font-bold ${pnlColor}`}>
-              {pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}
-            </p>
-            <p className={`text-xs ${pnlColor}`}>
-              {pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(2)}%
-            </p>
-          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className={`text-right px-2 py-1 rounded-md cursor-default ${pnlBg}`}>
+                <p className={`text-sm font-bold ${pnlColor}`}>
+                  {pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}
+                </p>
+                <p className={`text-xs ${pnlColor}`}>
+                  {pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(2)}%
+                </p>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>Unrealized P&L — estimated profit/loss if closed at current price</TooltipContent>
+          </Tooltip>
         </div>
 
         {/* Price Grid */}
@@ -103,10 +116,15 @@ export function LiveTradeCard({ trade, priceChange, onClose }: LiveTradeCardProp
               ${trade.current_price?.toLocaleString() || "-"}
             </p>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Size</p>
-            <p className="font-medium">${trade.position_size_usd.toLocaleString()}</p>
-          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="cursor-default">
+                <p className="text-xs text-muted-foreground">Size</p>
+                <p className="font-medium">${trade.position_size_usd.toLocaleString()}</p>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>Total capital (margin) deployed in this position</TooltipContent>
+          </Tooltip>
         </div>
 
         {/* TP/SL Progress Bar */}
@@ -128,12 +146,19 @@ export function LiveTradeCard({ trade, priceChange, onClose }: LiveTradeCardProp
                 )}
               </div>
             </div>
-            <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${progressColor}`}
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden cursor-default">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${progressColor}`}
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                Price progress between stop loss (left) and take profit (right) — {progressPct.toFixed(0)}% of the way to TP
+              </TooltipContent>
+            </Tooltip>
           </div>
         )}
 

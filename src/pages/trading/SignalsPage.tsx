@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select"
 import { tradingApi } from "@/services/api"
 import { useSubscriptionModal } from "@/stores/subscription"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import type { Signal } from "@/types"
 
 export default function SignalsPage() {
@@ -209,19 +210,28 @@ export default function SignalsPage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div
-                        className={`h-10 w-10 rounded-lg flex items-center justify-center ${
-                          signal.direction === "long"
-                            ? "bg-green-500/20 text-green-500"
-                            : "bg-red-500/20 text-red-500"
-                        }`}
-                      >
-                        {signal.direction === "long" ? (
-                          <TrendingUp className="h-5 w-5" />
-                        ) : (
-                          <TrendingDown className="h-5 w-5" />
-                        )}
-                      </div>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={`h-10 w-10 rounded-lg flex items-center justify-center cursor-default ${
+                              signal.direction === "long"
+                                ? "bg-green-500/20 text-green-500"
+                                : "bg-red-500/20 text-red-500"
+                            }`}
+                          >
+                            {signal.direction === "long" ? (
+                              <TrendingUp className="h-5 w-5" />
+                            ) : (
+                              <TrendingDown className="h-5 w-5" />
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {signal.direction === "long"
+                            ? "Long — profits when price rises"
+                            : "Short — profits when price falls"}
+                        </TooltipContent>
+                      </Tooltip>
                       <div>
                         <CardTitle className="text-lg">{signal.symbol}</CardTitle>
                         <div className="flex items-center gap-1">
@@ -234,9 +244,19 @@ export default function SignalsPage() {
                         </div>
                       </div>
                     </div>
-                    <Badge variant={getStatusColor(signal.status) as "success" | "info" | "warning" | "destructive" | "secondary"}>
-                      {signal.status}
-                    </Badge>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant={getStatusColor(signal.status) as "success" | "info" | "warning" | "destructive" | "secondary"}>
+                          {signal.status}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {signal.status === "active" && "Signal is live and ready to execute"}
+                        {signal.status === "executed" && "Signal has been traded"}
+                        {signal.status === "expired" && "Signal window has closed"}
+                        {signal.status === "cancelled" && "Signal was cancelled"}
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -245,21 +265,38 @@ export default function SignalsPage() {
                       <p className="text-xs text-muted-foreground">Entry Price</p>
                       <p className="font-medium">${signal.entry_price.toLocaleString()}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Confidence</p>
-                      <p className="font-medium text-primary">{signal.confidence_score}%</p>
-                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="cursor-default">
+                          <p className="text-xs text-muted-foreground">Confidence</p>
+                          <p className="font-medium text-primary">{signal.confidence_score}%</p>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        AI model confidence based on technical analysis consensus
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
 
                   <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1 text-green-500">
-                      <Target className="h-4 w-4" />
-                      <span>${signal.take_profit_price.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-red-500">
-                      <ShieldAlert className="h-4 w-4" />
-                      <span>${signal.stop_loss_price.toLocaleString()}</span>
-                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-1 text-green-500 cursor-default">
+                          <Target className="h-4 w-4" />
+                          <span>${signal.take_profit_price.toLocaleString()}</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>Take profit — position closes automatically at this price</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-1 text-red-500 cursor-default">
+                          <ShieldAlert className="h-4 w-4" />
+                          <span>${signal.stop_loss_price.toLocaleString()}</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>Stop loss — position closes to limit losses at this price</TooltipContent>
+                    </Tooltip>
                   </div>
 
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -269,9 +306,14 @@ export default function SignalsPage() {
                         {new Date(signal.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
                       </span>
                     </div>
-                    <span>
-                      R:R {signal.risk_reward_ratio.toFixed(2)}
-                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-default">R:R {signal.risk_reward_ratio.toFixed(2)}</span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Risk-to-reward ratio — potential profit vs potential loss. Higher is better (≥2 is good)
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
 
                   {signal.outcome !== "pending" && (

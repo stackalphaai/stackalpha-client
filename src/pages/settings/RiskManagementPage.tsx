@@ -32,6 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { riskApi } from "@/services/api"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import type { RiskSettings, PortfolioMetrics, CircuitBreakerStatus } from "@/types"
 
 export default function RiskManagementPage() {
@@ -196,65 +197,87 @@ export default function RiskManagementPage() {
 
       {/* Portfolio Metrics */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm text-muted-foreground">Portfolio Heat</div>
-              <Activity className={`h-5 w-5 ${portfolioHeatColor}`} />
-            </div>
-            <div className={`text-3xl font-bold ${portfolioHeatColor}`}>
-              {metrics.portfolio_heat.toFixed(1)}%
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">
-              Risk exposure across positions
-            </div>
-          </CardContent>
-        </Card>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Card className="cursor-default">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm text-muted-foreground">Portfolio Heat</div>
+                  <Activity className={`h-5 w-5 ${portfolioHeatColor}`} />
+                </div>
+                <div className={`text-3xl font-bold ${portfolioHeatColor}`}>
+                  {metrics.portfolio_heat.toFixed(1)}%
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Risk exposure across positions
+                </div>
+              </CardContent>
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent>
+            Overall risk exposure across all positions. &lt;40% = safe (green), 40–60% = moderate (yellow), &gt;60% = high risk (red)
+          </TooltipContent>
+        </Tooltip>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm text-muted-foreground">Daily P&L</div>
-              <TrendingDown className={metrics.daily_pnl >= 0 ? "text-green-500" : "text-red-500"} />
-            </div>
-            <div className={`text-3xl font-bold ${metrics.daily_pnl >= 0 ? "text-green-500" : "text-red-500"}`}>
-              ${metrics.daily_pnl.toLocaleString()}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">
-              {Math.abs(metrics.daily_pnl / metrics.total_equity * 100).toFixed(2)}% of equity
-            </div>
-          </CardContent>
-        </Card>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Card className="cursor-default">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm text-muted-foreground">Daily P&L</div>
+                  <TrendingDown className={metrics.daily_pnl >= 0 ? "text-green-500" : "text-red-500"} />
+                </div>
+                <div className={`text-3xl font-bold ${metrics.daily_pnl >= 0 ? "text-green-500" : "text-red-500"}`}>
+                  ${metrics.daily_pnl.toLocaleString()}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {Math.abs(metrics.daily_pnl / metrics.total_equity * 100).toFixed(2)}% of equity
+                </div>
+              </CardContent>
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent>Today's realized and unrealized P&L as a percentage of total account equity</TooltipContent>
+        </Tooltip>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm text-muted-foreground">Open Positions</div>
-              <Activity className="h-5 w-5 text-primary" />
-            </div>
-            <div className="text-3xl font-bold">
-              {metrics.open_positions_count}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">
-              Max: {settings.max_open_positions}
-            </div>
-          </CardContent>
-        </Card>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Card className="cursor-default">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm text-muted-foreground">Open Positions</div>
+                  <Activity className="h-5 w-5 text-primary" />
+                </div>
+                <div className="text-3xl font-bold">
+                  {metrics.open_positions_count}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Max: {settings.max_open_positions}
+                </div>
+              </CardContent>
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent>Number of currently open positions out of your configured maximum</TooltipContent>
+        </Tooltip>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm text-muted-foreground">Consecutive Losses</div>
-              <AlertCircle className="h-5 w-5 text-red-500" />
-            </div>
-            <div className="text-3xl font-bold text-red-500">
-              {metrics.consecutive_losses}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">
-              Max: {settings.max_consecutive_losses}
-            </div>
-          </CardContent>
-        </Card>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Card className="cursor-default">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm text-muted-foreground">Consecutive Losses</div>
+                  <AlertCircle className="h-5 w-5 text-red-500" />
+                </div>
+                <div className="text-3xl font-bold text-red-500">
+                  {metrics.consecutive_losses}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Max: {settings.max_consecutive_losses}
+                </div>
+              </CardContent>
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent>Current streak of losing trades in a row. Trading halts automatically at the configured max</TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Emergency Controls */}
@@ -284,10 +307,15 @@ export default function RiskManagementPage() {
 
             <div className="flex gap-3">
               {circuitBreaker.status === "active" ? (
-                <Button variant="outline" onClick={handlePauseTrading} className="gap-2">
-                  <Pause className="h-4 w-4" />
-                  Pause Trading
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" onClick={handlePauseTrading} className="gap-2">
+                      <Pause className="h-4 w-4" />
+                      Pause Trading
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Temporarily stop new trades from opening without closing existing positions</TooltipContent>
+                </Tooltip>
               ) : circuitBreaker.status === "paused" ? (
                 <Button onClick={handleResumeTrading} className="gap-2">
                   <Play className="h-4 w-4" />
@@ -295,10 +323,15 @@ export default function RiskManagementPage() {
                 </Button>
               ) : null}
 
-              <Button variant="destructive" onClick={() => setShowKillSwitchDialog(true)} className="gap-2">
-                <Power className="h-4 w-4" />
-                Kill Switch
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="destructive" onClick={() => setShowKillSwitchDialog(true)} className="gap-2">
+                    <Power className="h-4 w-4" />
+                    Kill Switch
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Emergency: immediately close ALL open positions and stop all trading</TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </CardContent>
@@ -317,7 +350,14 @@ export default function RiskManagementPage() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Position Sizing Method</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label className="cursor-default">Position Sizing Method</Label>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    Fixed Percent: risk the same % per trade. Fixed Amount: risk a set $ amount. Kelly: mathematically optimal sizing based on win rate. Risk Parity: equal risk across all positions
+                  </TooltipContent>
+                </Tooltip>
                 <Select
                   value={settings.position_sizing_method}
                   onValueChange={(value) =>
@@ -337,7 +377,12 @@ export default function RiskManagementPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Max Position Size (%)</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label className="cursor-default">Max Position Size (%)</Label>
+                  </TooltipTrigger>
+                  <TooltipContent>Maximum percentage of account balance to risk on a single trade</TooltipContent>
+                </Tooltip>
                 <Input
                   type="number"
                   value={settings.max_position_size_percent}
@@ -393,7 +438,12 @@ export default function RiskManagementPage() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Max Daily Loss ($)</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label className="cursor-default">Max Daily Loss ($)</Label>
+                  </TooltipTrigger>
+                  <TooltipContent>Trading halts automatically if total losses exceed this dollar amount today</TooltipContent>
+                </Tooltip>
                 <Input
                   type="number"
                   value={settings.max_daily_loss_usd}
@@ -467,7 +517,14 @@ export default function RiskManagementPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label>Trailing Stop Loss</Label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Label className="cursor-default">Trailing Stop Loss</Label>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      Stop loss moves automatically in your favor as price rises, locking in profits while limiting downside
+                    </TooltipContent>
+                  </Tooltip>
                   <div className="text-xs text-muted-foreground">
                     Automatically lock in profits
                   </div>
@@ -482,7 +539,14 @@ export default function RiskManagementPage() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <Label>Scale Out</Label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Label className="cursor-default">Scale Out</Label>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      Automatically close portions of the position at predefined profit targets, securing gains incrementally
+                    </TooltipContent>
+                  </Tooltip>
                   <div className="text-xs text-muted-foreground">
                     Take profits in tranches
                   </div>
@@ -497,7 +561,14 @@ export default function RiskManagementPage() {
 
               <div className="flex items-center justify-between">
                 <div>
-                  <Label>Pyramiding</Label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Label className="cursor-default">Pyramiding</Label>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      Add to a winning position as price moves in your favor, increasing exposure when the trade is profitable
+                    </TooltipContent>
+                  </Tooltip>
                   <div className="text-xs text-muted-foreground">
                     Add to winning positions
                   </div>

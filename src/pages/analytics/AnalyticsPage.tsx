@@ -13,7 +13,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { analyticsApi } from "@/services/api"
 import type { TradeAnalytics, DailyPnL } from "@/types"
 
@@ -75,6 +76,7 @@ export default function AnalyticsPage() {
     ? [
         {
           title: "Total Trades",
+          tooltip: "Total number of trades executed in the selected period",
           value: analytics.total_trades,
           icon: Activity,
           color: "text-primary",
@@ -82,6 +84,7 @@ export default function AnalyticsPage() {
         },
         {
           title: "Win Rate",
+          tooltip: "Percentage of trades that closed with a profit in the selected period",
           value: `${analytics.win_rate.toFixed(1)}%`,
           icon: Target,
           color: analytics.win_rate >= 50 ? "text-green-500" : "text-red-500",
@@ -89,6 +92,7 @@ export default function AnalyticsPage() {
         },
         {
           title: "Total P&L",
+          tooltip: "Cumulative realized profit & loss across all closed trades in the selected period",
           value: `$${analytics.total_pnl.toLocaleString()}`,
           icon: analytics.total_pnl >= 0 ? TrendingUp : TrendingDown,
           color: analytics.total_pnl >= 0 ? "text-green-500" : "text-red-500",
@@ -96,6 +100,7 @@ export default function AnalyticsPage() {
         },
         {
           title: "Avg P&L per Trade",
+          tooltip: "Average profit or loss per closed trade — key indicator of edge quality",
           value: `$${analytics.average_pnl.toFixed(2)}`,
           icon: BarChart3,
           color: analytics.average_pnl >= 0 ? "text-green-500" : "text-red-500",
@@ -158,55 +163,70 @@ export default function AnalyticsPage() {
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{stat.title}</p>
-                  <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                </div>
-                <div className={`h-10 w-10 rounded-lg ${stat.bgColor} flex items-center justify-center`}>
-                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <Tooltip key={stat.title}>
+            <TooltipTrigger asChild>
+              <Card className="cursor-default">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">{stat.title}</p>
+                      <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                    </div>
+                    <div className={`h-10 w-10 rounded-lg ${stat.bgColor} flex items-center justify-center`}>
+                      <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TooltipTrigger>
+            <TooltipContent>{stat.tooltip}</TooltipContent>
+          </Tooltip>
         ))}
       </div>
 
       {/* Best/Worst Trade */}
       {analytics && (
         <div className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Best Trade</p>
-                  <p className="text-2xl font-bold text-green-500 mt-1">
-                    +${analytics.best_trade.toFixed(2)}
-                  </p>
-                </div>
-                <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                  <TrendingUp className="h-5 w-5 text-green-500" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Worst Trade</p>
-                  <p className="text-2xl font-bold text-red-500 mt-1">
-                    ${analytics.worst_trade.toFixed(2)}
-                  </p>
-                </div>
-                <div className="h-10 w-10 rounded-lg bg-red-500/10 flex items-center justify-center">
-                  <TrendingDown className="h-5 w-5 text-red-500" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Card className="cursor-default">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Best Trade</p>
+                      <p className="text-2xl font-bold text-green-500 mt-1">
+                        +${analytics.best_trade.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                      <TrendingUp className="h-5 w-5 text-green-500" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TooltipTrigger>
+            <TooltipContent>Highest single-trade profit in the selected period</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Card className="cursor-default">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Worst Trade</p>
+                      <p className="text-2xl font-bold text-red-500 mt-1">
+                        ${analytics.worst_trade.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="h-10 w-10 rounded-lg bg-red-500/10 flex items-center justify-center">
+                      <TrendingDown className="h-5 w-5 text-red-500" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TooltipTrigger>
+            <TooltipContent>Largest single-trade loss in the selected period</TooltipContent>
+          </Tooltip>
         </div>
       )}
 
@@ -241,7 +261,7 @@ export default function AnalyticsPage() {
                       tickFormatter={(value) => `$${value}`}
                       className="text-xs text-muted-foreground"
                     />
-                    <Tooltip
+                    <RechartsTooltip
                       contentStyle={{
                         backgroundColor: "hsl(var(--card))",
                         border: "1px solid hsl(var(--border))",
@@ -291,7 +311,7 @@ export default function AnalyticsPage() {
                       <Cell fill="#22c55e" />
                       <Cell fill="#ef4444" />
                     </Pie>
-                    <Tooltip
+                    <RechartsTooltip
                       contentStyle={{
                         backgroundColor: "hsl(var(--card))",
                         border: "1px solid hsl(var(--border))",
@@ -326,7 +346,7 @@ export default function AnalyticsPage() {
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis type="number" tickFormatter={(value) => `$${value}`} />
                     <YAxis dataKey="symbol" type="category" width={80} />
-                    <Tooltip
+                    <RechartsTooltip
                       contentStyle={{
                         backgroundColor: "hsl(var(--card))",
                         border: "1px solid hsl(var(--border))",
