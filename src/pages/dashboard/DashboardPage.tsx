@@ -30,7 +30,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { InfoTooltip } from "@/components/ui/info-tooltip"
 import { TopGainers } from "@/components/features/TopGainers"
-import { analyticsApi, tradingApi, walletApi } from "@/services/api"
+import { analyticsApi, exchangeApi, tradingApi, walletApi } from "@/services/api"
 import { useAuthStore } from "@/stores/auth"
 import type { Signal, Trade, DailyPnL, TradeAnalytics } from "@/types"
 
@@ -64,15 +64,16 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     setHasError(false)
     try {
-      const [analyticsRes, pnlRes, signalsRes, tradesRes, walletsRes] = await Promise.allSettled([
+      const [analyticsRes, pnlRes, signalsRes, tradesRes, walletsRes, exchangesRes] = await Promise.allSettled([
         analyticsApi.getTradeAnalytics("30d"),
         analyticsApi.getDailyPnL(30),
         tradingApi.getActiveSignals(),
         tradingApi.getOpenTrades(),
         walletApi.getWallets(),
+        exchangeApi.getConnections(),
       ])
 
-      const allRejected = [analyticsRes, pnlRes, signalsRes, tradesRes, walletsRes].every(
+      const allRejected = [analyticsRes, pnlRes, signalsRes, tradesRes, walletsRes, exchangesRes].every(
         (r) => r.status === "rejected"
       )
       if (allRejected) setHasError(true)
@@ -82,13 +83,22 @@ export default function DashboardPage() {
       if (signalsRes.status === "fulfilled") setActiveSignals(signalsRes.value.data.slice(0, 5))
       if (tradesRes.status === "fulfilled") setOpenTrades(tradesRes.value.data.slice(0, 5))
 
+      // Sum balances from both wallets (Hyperliquid) and exchanges (Binance)
+      let balance = 0
       if (walletsRes.status === "fulfilled") {
-        const balance = walletsRes.value.data.reduce(
+        balance += walletsRes.value.data.reduce(
           (sum: number, w: { balance_usd: number | null }) => sum + (w.balance_usd || 0),
           0
         )
-        setTotalBalance(balance)
       }
+      if (exchangesRes.status === "fulfilled") {
+        const exchanges = exchangesRes.value.data.items || exchangesRes.value.data || []
+        balance += exchanges.reduce(
+          (sum: number, ex: { balance_usd: number | null }) => sum + (ex.balance_usd || 0),
+          0
+        )
+      }
+      setTotalBalance(balance)
     } catch {
       setHasError(true)
     } finally {
@@ -106,9 +116,9 @@ export default function DashboardPage() {
   const stats = [
     {
       title: "Total Balance",
-      tooltip: "Combined USD balance across all connected wallets",
+      tooltip: "Combined USD balance across all connected wallets and exchanges",
       value: `$${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      change: totalBalance > 0 ? "Connected" : "No wallets",
+      change: totalBalance > 0 ? "Connected" : "No accounts",
       trend: (totalBalance > 0 ? "up" : "neutral") as "up" | "down" | "neutral",
       icon: Wallet,
     },

@@ -245,6 +245,7 @@ export interface RiskSettings {
   position_sizing_method: "fixed_amount" | "fixed_percent" | "kelly" | "risk_parity"
   max_position_size_usd: number
   max_position_size_percent: number
+  risk_percent_per_trade: number
 
   // Portfolio Limits
   max_portfolio_heat: number

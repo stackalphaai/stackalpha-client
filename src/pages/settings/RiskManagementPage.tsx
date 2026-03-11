@@ -420,6 +420,45 @@ export default function RiskManagementPage() {
                   max={20}
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label>
+                  Risk % Per Trade
+                  <InfoTooltip content="Percentage of total account equity you're willing to lose on a single trade. Lower values preserve capital; 1–2% is considered conservative" />
+                </Label>
+                <Input
+                  type="number"
+                  value={settings.risk_percent_per_trade}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      risk_percent_per_trade: parseFloat(e.target.value),
+                    })
+                  }
+                  min={0.1}
+                  max={100}
+                  step={0.1}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>
+                  Max Leverage
+                  <InfoTooltip content="Maximum leverage multiplier allowed per trade. Higher leverage amplifies both gains and losses. Trades will be clamped to this value" />
+                </Label>
+                <Input
+                  type="number"
+                  value={settings.max_leverage}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      max_leverage: parseInt(e.target.value),
+                    })
+                  }
+                  min={1}
+                  max={125}
+                />
+              </div>
             </div>
           </div>
 
