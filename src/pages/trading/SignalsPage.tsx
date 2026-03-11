@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { motion } from "framer-motion"
 import {
   TrendingUp,
@@ -34,15 +34,23 @@ import type { Signal } from "@/types"
 export default function SignalsPage() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const params = useParams<{ exchange?: string }>()
+  const exchangeParam = params.exchange
   const openSubscription = useSubscriptionModal((s) => s.open)
   const [isLoading, setIsLoading] = useState(true)
   const [signals, setSignals] = useState<Signal[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [exchangeFilter, setExchangeFilter] = useState<string>("all")
+  const [exchangeFilter, setExchangeFilter] = useState<string>(exchangeParam || "all")
+
+  // Sync exchangeFilter when URL param changes
+  useEffect(() => {
+    setExchangeFilter(exchangeParam || "all")
+  }, [exchangeParam])
 
   useEffect(() => {
     const fetchSignals = async () => {
+      setIsLoading(true)
       try {
         const params: { status?: string; exchange?: string } = {}
         if (statusFilter !== "all") {
@@ -62,6 +70,18 @@ export default function SignalsPage() {
 
     fetchSignals()
   }, [statusFilter, exchangeFilter])
+
+  const pageTitle = exchangeParam === "binance"
+    ? "Binance Signals"
+    : exchangeParam === "hyperliquid"
+    ? "Hyperliquid Signals"
+    : "Trading Signals"
+
+  const pageDescription = exchangeParam === "binance"
+    ? "AI-generated Binance Futures trading opportunities"
+    : exchangeParam === "hyperliquid"
+    ? "AI-generated Hyperliquid trading opportunities"
+    : "AI-generated trading opportunities"
 
   const filteredSignals = signals.filter((signal) =>
     signal.symbol.toLowerCase().includes(searchQuery.toLowerCase())
@@ -145,13 +165,13 @@ export default function SignalsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">Trading Signals</h1>
+            <h1 className="text-2xl font-bold">{pageTitle}</h1>
             <Badge variant="default" className="bg-primary text-xs">
               <Crown className="h-3 w-3 mr-1" />
               PRO
             </Badge>
           </div>
-          <p className="text-muted-foreground">AI-generated trading opportunities</p>
+          <p className="text-muted-foreground">{pageDescription}</p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64">
@@ -163,16 +183,18 @@ export default function SignalsPage() {
               className="pl-9"
             />
           </div>
-          <Select value={exchangeFilter} onValueChange={setExchangeFilter}>
-            <SelectTrigger className="w-36">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Exchanges</SelectItem>
-              <SelectItem value="hyperliquid">Hyperliquid</SelectItem>
-              <SelectItem value="binance">Binance</SelectItem>
-            </SelectContent>
-          </Select>
+          {!exchangeParam && (
+            <Select value={exchangeFilter} onValueChange={setExchangeFilter}>
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Exchanges</SelectItem>
+                <SelectItem value="hyperliquid">Hyperliquid</SelectItem>
+                <SelectItem value="binance">Binance</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-32">
               <Filter className="h-4 w-4 mr-2" />

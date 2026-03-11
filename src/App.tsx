@@ -143,6 +143,7 @@ function App() {
           >
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/signals" element={<SignalsPage />} />
+            <Route path="/signals/exchange/:exchange" element={<SignalsPage />} />
             <Route path="/signals/:id" element={<SignalDetailPage />} />
             <Route path="/trades" element={<TradesPage />} />
             <Route path="/markets" element={<MarketsPage />} />

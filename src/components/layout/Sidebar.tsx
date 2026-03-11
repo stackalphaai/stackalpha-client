@@ -12,6 +12,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Zap,
   History,
   Shield,
@@ -36,11 +37,27 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useAuthStore } from "@/stores/auth"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
-const mainNavItems = [
+interface NavItem {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  href: string
+  children?: { label: string; href: string }[]
+}
+
+const mainNavItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { icon: Zap, label: "Signals", href: "/signals" },
+  {
+    icon: Zap,
+    label: "Signals",
+    href: "/signals",
+    children: [
+      { label: "All Signals", href: "/signals" },
+      { label: "Binance", href: "/signals/exchange/binance" },
+      { label: "Hyperliquid", href: "/signals/exchange/hyperliquid" },
+    ],
+  },
   { icon: History, label: "Trades", href: "/trades" },
   { icon: TrendingUp, label: "Markets", href: "/markets" },
   { icon: Wallet, label: "Wallets", href: "/wallets" },
@@ -64,8 +81,22 @@ interface SidebarProps {
 export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+  const [expandedItems, setExpandedItems] = useState<string[]>([])
   const location = useLocation()
   const { user, clearAuth } = useAuthStore()
+
+  // Auto-expand parent if a child route is active
+  useEffect(() => {
+    for (const item of mainNavItems) {
+      if (item.children) {
+        const isChildActive = item.children.some((child) => location.pathname === child.href)
+        const isParentPath = location.pathname.startsWith(item.href + "/")
+        if ((isChildActive || isParentPath) && !expandedItems.includes(item.href)) {
+          setExpandedItems((prev) => [...prev, item.href])
+        }
+      }
+    }
+  }, [location.pathname])
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "U"
@@ -82,24 +113,94 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
     if (onMobileClose) onMobileClose()
   }
 
-  const renderNavItems = (items: typeof mainNavItems, isMain: boolean) =>
+  const toggleExpand = (href: string) => {
+    setExpandedItems((prev) =>
+      prev.includes(href) ? prev.filter((h) => h !== href) : [...prev, href]
+    )
+  }
+
+  const renderNavItems = (items: NavItem[], isMain: boolean) =>
     items.map((item) => {
       const isActive = location.pathname === item.href
-      const NavItem = (
+      const hasChildren = item.children && item.children.length > 0
+      const isExpanded = expandedItems.includes(item.href)
+      const isChildActive = hasChildren && item.children!.some((child) => location.pathname === child.href)
+      const isHighlighted = isActive || isChildActive
+
+      // Items with children: render as expandable button
+      if (hasChildren && (!collapsed || mobileOpen)) {
+        return (
+          <div key={item.href}>
+            <button
+              onClick={() => toggleExpand(item.href)}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 w-full",
+                isHighlighted
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              )}
+            >
+              <item.icon className="h-5 w-5 flex-shrink-0" />
+              <span>{item.label}</span>
+              <ChevronDown
+                className={cn(
+                  "ml-auto h-4 w-4 transition-transform duration-200",
+                  isExpanded && "rotate-180"
+                )}
+              />
+            </button>
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="ml-4 mt-1 space-y-0.5 border-l border-border pl-3">
+                    {item.children!.map((child) => {
+                      const isChildItemActive = location.pathname === child.href
+                      return (
+                        <NavLink
+                          key={child.href}
+                          to={child.href}
+                          onClick={handleNavClick}
+                          className={cn(
+                            "flex items-center rounded-md px-3 py-2 text-sm transition-all duration-200",
+                            isChildItemActive
+                              ? "text-primary font-medium bg-primary/10"
+                              : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                          )}
+                        >
+                          {child.label}
+                        </NavLink>
+                      )
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )
+      }
+
+      // Regular nav item (no children, or collapsed)
+      const NavItemEl = (
         <NavLink
           key={item.href}
-          to={item.href}
+          to={hasChildren ? item.children![0].href : item.href}
           onClick={handleNavClick}
           className={cn(
             "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-            isActive
+            isHighlighted
               ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
               : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
           )}
         >
           <item.icon className={cn("h-5 w-5 flex-shrink-0", collapsed && !mobileOpen && "mx-auto")} />
           {(!collapsed || mobileOpen) && <span>{item.label}</span>}
-          {isActive && (!collapsed || mobileOpen) && isMain && (
+          {isHighlighted && (!collapsed || mobileOpen) && isMain && (
             <motion.div
               layoutId="activeIndicator"
               className="ml-auto h-2 w-2 rounded-full bg-white"
@@ -111,13 +212,13 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
       if (collapsed && !mobileOpen) {
         return (
           <Tooltip key={item.href}>
-            <TooltipTrigger asChild>{NavItem}</TooltipTrigger>
+            <TooltipTrigger asChild>{NavItemEl}</TooltipTrigger>
             <TooltipContent side="right">{item.label}</TooltipContent>
           </Tooltip>
         )
       }
 
-      return NavItem
+      return NavItemEl
     })
 
   const sidebarContent = (

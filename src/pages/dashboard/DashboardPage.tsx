@@ -322,14 +322,34 @@ export default function DashboardPage() {
         {/* Active Signals */}
         <motion.div variants={itemVariants}>
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Active Signals</CardTitle>
-                <CardDescription>Latest trading opportunities</CardDescription>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Active Signals</CardTitle>
+                  <CardDescription>Latest trading opportunities</CardDescription>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => navigate("/signals")}>
+                  View All
+                </Button>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/signals")}>
-                View All
-              </Button>
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => navigate("/signals/exchange/binance")}
+                >
+                  Binance Signals
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => navigate("/signals/exchange/hyperliquid")}
+                >
+                  Hyperliquid Signals
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -363,6 +383,9 @@ export default function DashboardPage() {
                             <span className="font-medium">{signal.symbol}</span>
                             <Badge variant={signal.direction === "long" ? "long" : "short"}>
                               {signal.direction.toUpperCase()}
+                            </Badge>
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                              {(signal.exchange || "hyperliquid") === "binance" ? "Binance" : "HL"}
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground">
