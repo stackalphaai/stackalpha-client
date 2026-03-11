@@ -28,7 +28,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { InfoTooltip } from "@/components/ui/info-tooltip"
 import { TopGainers } from "@/components/features/TopGainers"
 import { analyticsApi, tradingApi, walletApi } from "@/services/api"
 import { useAuthStore } from "@/stores/auth"
@@ -220,43 +220,41 @@ export default function DashboardPage() {
         className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
       >
         {stats.map((stat) => (
-          <Tooltip key={stat.title}>
-            <TooltipTrigger asChild>
-              <Card className="relative overflow-hidden cursor-default">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">{stat.title}</p>
-                      <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
-                      <div className="flex items-center mt-1">
-                        {stat.trend === "up" && (
-                          <ArrowUpRight className="h-4 w-4 text-green-500 mr-1" />
-                        )}
-                        {stat.trend === "down" && (
-                          <ArrowDownRight className="h-4 w-4 text-red-500 mr-1" />
-                        )}
-                        <span
-                          className={`text-xs ${
-                            stat.trend === "up"
-                              ? "text-green-500"
-                              : stat.trend === "down"
-                              ? "text-red-500"
-                              : "text-muted-foreground"
-                          }`}
-                        >
-                          {stat.change}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <stat.icon className="h-6 w-6 text-primary" />
-                    </div>
+          <Card key={stat.title} className="relative overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    {stat.title}
+                    <InfoTooltip content={stat.tooltip} />
+                  </p>
+                  <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
+                  <div className="flex items-center mt-1">
+                    {stat.trend === "up" && (
+                      <ArrowUpRight className="h-4 w-4 text-green-500 mr-1" />
+                    )}
+                    {stat.trend === "down" && (
+                      <ArrowDownRight className="h-4 w-4 text-red-500 mr-1" />
+                    )}
+                    <span
+                      className={`text-xs ${
+                        stat.trend === "up"
+                          ? "text-green-500"
+                          : stat.trend === "down"
+                          ? "text-red-500"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      {stat.change}
+                    </span>
                   </div>
-                </CardContent>
-              </Card>
-            </TooltipTrigger>
-            <TooltipContent>{stat.tooltip}</TooltipContent>
-          </Tooltip>
+                </div>
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <stat.icon className="h-6 w-6 text-primary" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </motion.div>
 
@@ -362,17 +360,15 @@ export default function DashboardPage() {
                           </p>
                         </div>
                       </div>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="text-right cursor-default">
-                            <p className="font-medium text-green-500">
-                              {signal.confidence_score}%
-                            </p>
-                            <p className="text-xs text-muted-foreground">Confidence</p>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>AI model confidence in this signal</TooltipContent>
-                      </Tooltip>
+                      <div className="text-right">
+                        <p className="font-medium text-green-500">
+                          {signal.confidence_score}%
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Confidence
+                          <InfoTooltip content="AI model confidence in this signal" />
+                        </p>
+                      </div>
                     </div>
                   ))
                 )}
@@ -421,19 +417,15 @@ export default function DashboardPage() {
                             {trade.direction.toUpperCase()}
                           </Badge>
                         </div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span
-                              className={`font-medium text-sm cursor-default ${
-                                (trade.unrealized_pnl || 0) >= 0 ? "text-green-500" : "text-red-500"
-                              }`}
-                            >
-                              {(trade.unrealized_pnl || 0) >= 0 ? "+" : ""}
-                              ${(trade.unrealized_pnl || 0).toFixed(2)}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>Estimated profit/loss if this trade closed at current price</TooltipContent>
-                        </Tooltip>
+                        <span
+                          className={`font-medium text-sm ${
+                            (trade.unrealized_pnl || 0) >= 0 ? "text-green-500" : "text-red-500"
+                          }`}
+                        >
+                          {(trade.unrealized_pnl || 0) >= 0 ? "+" : ""}
+                          ${(trade.unrealized_pnl || 0).toFixed(2)}
+                          <InfoTooltip content="Estimated profit/loss if closed at current price" />
+                        </span>
                       </div>
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>Entry: ${trade.entry_price?.toLocaleString() || "-"}</span>

@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { InfoTooltip } from "@/components/ui/info-tooltip"
 import { analyticsApi } from "@/services/api"
 import type { TradeAnalytics, DailyPnL } from "@/types"
 
@@ -163,70 +163,64 @@ export default function AnalyticsPage() {
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-4">
         {stats.map((stat) => (
-          <Tooltip key={stat.title}>
-            <TooltipTrigger asChild>
-              <Card className="cursor-default">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">{stat.title}</p>
-                      <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                    </div>
-                    <div className={`h-10 w-10 rounded-lg ${stat.bgColor} flex items-center justify-center`}>
-                      <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TooltipTrigger>
-            <TooltipContent>{stat.tooltip}</TooltipContent>
-          </Tooltip>
+          <Card key={stat.title}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    {stat.title}
+                    <InfoTooltip content={stat.tooltip} />
+                  </p>
+                  <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                </div>
+                <div className={`h-10 w-10 rounded-lg ${stat.bgColor} flex items-center justify-center`}>
+                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
       {/* Best/Worst Trade */}
       {analytics && (
         <div className="grid gap-4 md:grid-cols-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Card className="cursor-default">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Best Trade</p>
-                      <p className="text-2xl font-bold text-green-500 mt-1">
-                        +${analytics.best_trade.toFixed(2)}
-                      </p>
-                    </div>
-                    <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                      <TrendingUp className="h-5 w-5 text-green-500" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TooltipTrigger>
-            <TooltipContent>Highest single-trade profit in the selected period</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Card className="cursor-default">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Worst Trade</p>
-                      <p className="text-2xl font-bold text-red-500 mt-1">
-                        ${analytics.worst_trade.toFixed(2)}
-                      </p>
-                    </div>
-                    <div className="h-10 w-10 rounded-lg bg-red-500/10 flex items-center justify-center">
-                      <TrendingDown className="h-5 w-5 text-red-500" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TooltipTrigger>
-            <TooltipContent>Largest single-trade loss in the selected period</TooltipContent>
-          </Tooltip>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Best Trade
+                    <InfoTooltip content="Highest single-trade profit in the selected period" />
+                  </p>
+                  <p className="text-2xl font-bold text-green-500 mt-1">
+                    +${analytics.best_trade.toFixed(2)}
+                  </p>
+                </div>
+                <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                  <TrendingUp className="h-5 w-5 text-green-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Worst Trade
+                    <InfoTooltip content="Largest single-trade loss in the selected period" />
+                  </p>
+                  <p className="text-2xl font-bold text-red-500 mt-1">
+                    ${analytics.worst_trade.toFixed(2)}
+                  </p>
+                </div>
+                <div className="h-10 w-10 rounded-lg bg-red-500/10 flex items-center justify-center">
+                  <TrendingDown className="h-5 w-5 text-red-500" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
