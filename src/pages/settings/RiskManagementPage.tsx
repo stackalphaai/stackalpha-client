@@ -131,6 +131,16 @@ export default function RiskManagementPage() {
     }
   }
 
+  const handleDeactivateKillSwitch = async () => {
+    try {
+      await riskApi.deactivateKillSwitch()
+      toast.success("Kill switch deactivated - Trading resumed")
+      await fetchData()
+    } catch (error) {
+      toast.error("Failed to deactivate kill switch")
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -189,6 +199,12 @@ export default function RiskManagementPage() {
                 <Button onClick={handleResumeTrading} className="gap-2">
                   <Play className="h-4 w-4" />
                   Resume Trading
+                </Button>
+              )}
+              {circuitBreaker.status === "killed" && (
+                <Button onClick={handleDeactivateKillSwitch} className="gap-2">
+                  <Play className="h-4 w-4" />
+                  Deactivate Kill Switch
                 </Button>
               )}
             </div>
@@ -312,17 +328,24 @@ export default function RiskManagementPage() {
                   <Play className="h-4 w-4" />
                   Resume Trading
                 </Button>
+              ) : circuitBreaker.status === "killed" ? (
+                <Button onClick={handleDeactivateKillSwitch} className="gap-2">
+                  <Play className="h-4 w-4" />
+                  Deactivate Kill Switch
+                </Button>
               ) : null}
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="destructive" onClick={() => setShowKillSwitchDialog(true)} className="gap-2">
-                    <Power className="h-4 w-4" />
-                    Kill Switch
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Emergency: immediately close ALL open positions and stop all trading</TooltipContent>
-              </Tooltip>
+              {circuitBreaker.status !== "killed" && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="destructive" onClick={() => setShowKillSwitchDialog(true)} className="gap-2">
+                      <Power className="h-4 w-4" />
+                      Kill Switch
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Emergency: immediately close ALL open positions and stop all trading</TooltipContent>
+                </Tooltip>
+              )}
             </div>
           </div>
         </CardContent>
