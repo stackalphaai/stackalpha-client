@@ -399,7 +399,12 @@ export default function RiskManagementPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Max Position Size ($)</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label className="cursor-default">Max Position Size ($)</Label>
+                  </TooltipTrigger>
+                  <TooltipContent>Hard dollar cap on any single position regardless of account size</TooltipContent>
+                </Tooltip>
                 <Input
                   type="number"
                   value={settings.max_position_size_usd}
@@ -415,7 +420,12 @@ export default function RiskManagementPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Max Open Positions</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label className="cursor-default">Max Open Positions</Label>
+                  </TooltipTrigger>
+                  <TooltipContent>Maximum number of trades that can be open simultaneously. Limits overall exposure</TooltipContent>
+                </Tooltip>
                 <Input
                   type="number"
                   value={settings.max_open_positions}
@@ -459,7 +469,12 @@ export default function RiskManagementPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Max Daily Loss (%)</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label className="cursor-default">Max Daily Loss (%)</Label>
+                  </TooltipTrigger>
+                  <TooltipContent>Trading pauses if daily losses exceed this percentage of total account equity</TooltipContent>
+                </Tooltip>
                 <Input
                   type="number"
                   value={settings.max_daily_loss_percent}
@@ -476,7 +491,12 @@ export default function RiskManagementPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Max Weekly Loss (%)</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label className="cursor-default">Max Weekly Loss (%)</Label>
+                  </TooltipTrigger>
+                  <TooltipContent>Trading pauses for the week if cumulative losses exceed this percentage of equity</TooltipContent>
+                </Tooltip>
                 <Input
                   type="number"
                   value={settings.max_weekly_loss_percent}
@@ -493,7 +513,12 @@ export default function RiskManagementPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Max Consecutive Losses</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Label className="cursor-default">Max Consecutive Losses</Label>
+                  </TooltipTrigger>
+                  <TooltipContent>Trading pauses after this many losing trades in a row to prevent tilt-driven losses</TooltipContent>
+                </Tooltip>
                 <Input
                   type="number"
                   value={settings.max_consecutive_losses}
