@@ -229,7 +229,8 @@ export const subscriptionApi = {
 // Telegram API
 export const telegramApi = {
   getStatus: () => api.get("/v1/telegram/status"),
-  connect: () => api.post("/v1/telegram/connect"),
+  connect: (bot_token: string, chat_id: number) =>
+    api.post("/v1/telegram/connect", { bot_token, chat_id }),
   updateSettings: (settings: {
     signal_notifications?: boolean
     trade_notifications?: boolean

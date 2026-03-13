@@ -119,7 +119,7 @@ export default function NotificationsPage() {
                   <Badge variant="success">Active</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Notifications are sent to @{telegram?.telegram_username}
+                  Notifications are sent to chat ID: {telegram?.chat_id}
                 </p>
               </div>
             </div>

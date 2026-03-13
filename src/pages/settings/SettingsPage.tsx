@@ -16,6 +16,7 @@ import {
   Copy,
   Smartphone,
   Download,
+  Info,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -87,6 +88,10 @@ export default function SettingsPage() {
   const [disable2FACode, setDisable2FACode] = useState("")
   const [isDisabling2FA, setIsDisabling2FA] = useState(false)
   const [showDisconnectTelegramDialog, setShowDisconnectTelegramDialog] = useState(false)
+  const [botToken, setBotToken] = useState("")
+  const [chatId, setChatId] = useState("")
+  const [isConnectingTelegram, setIsConnectingTelegram] = useState(false)
+  const [showBotToken, setShowBotToken] = useState(false)
 
   const [showPassword, setShowPassword] = useState({
     current: false,
@@ -210,12 +215,28 @@ export default function SettingsPage() {
   }
 
   const handleConnectTelegram = async () => {
+    if (!botToken.trim() || !chatId.trim()) {
+      toast.error("Please enter both bot token and chat ID")
+      return
+    }
+
+    const parsedChatId = parseInt(chatId, 10)
+    if (isNaN(parsedChatId)) {
+      toast.error("Chat ID must be a valid number")
+      return
+    }
+
+    setIsConnectingTelegram(true)
     try {
-      const response = await telegramApi.connect()
+      const response = await telegramApi.connect(botToken.trim(), parsedChatId)
       setTelegram(response.data)
-      showSuccessToast("Verification code generated! Send it to our Telegram bot.")
+      setBotToken("")
+      setChatId("")
+      showSuccessToast("Telegram connected! You should have received a confirmation message.")
     } catch (error) {
-      showErrorToast(error, "Failed to generate verification code")
+      showErrorToast(error, "Failed to connect Telegram. Check your bot token and chat ID.")
+    } finally {
+      setIsConnectingTelegram(false)
     }
   }
 
@@ -538,12 +559,12 @@ export default function SettingsPage() {
         </TabsContent>
 
         {/* Telegram Tab */}
-        <TabsContent value="telegram" className="mt-6">
+        <TabsContent value="telegram" className="mt-6 space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Telegram Integration</CardTitle>
               <CardDescription>
-                Connect Telegram to receive real-time notifications
+                Connect your own Telegram bot to receive real-time notifications
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -559,7 +580,7 @@ export default function SettingsPage() {
                       <div>
                         <p className="font-medium">Connected</p>
                         <p className="text-sm text-muted-foreground">
-                          @{telegram.telegram_username}
+                          Chat ID: {telegram.chat_id}
                         </p>
                       </div>
                     </div>
@@ -583,50 +604,83 @@ export default function SettingsPage() {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {telegram?.verification_code ? (
-                    <div className="p-4 rounded-lg bg-muted/50 space-y-4">
-                      <div>
-                        <p className="text-sm font-medium mb-2">
-                          Click the button below to connect your Telegram:
-                        </p>
-                        <Button
-                          variant="gradient"
-                          className="w-full"
-                          onClick={() => {
-                            if (telegram.deep_link) {
-                              window.open(telegram.deep_link, "_blank")
-                            }
-                          }}
-                        >
-                          <Send className="h-4 w-4 mr-2" />
-                          Open Telegram Bot
-                        </Button>
-                      </div>
-                      <div className="border-t pt-4">
-                        <p className="text-xs text-muted-foreground mb-2">
-                          Or copy this link manually:
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <code className="text-xs font-mono bg-background px-2 py-1 rounded truncate flex-1">
-                            {telegram.deep_link || `https://t.me/${telegram.bot_username || "stackalpha_bot"}?start=${telegram.verification_code}`}
-                          </code>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => copyToClipboard(telegram.deep_link || `https://t.me/${telegram.bot_username || "stackalpha_bot"}?start=${telegram.verification_code}`)}
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
+                <div className="space-y-6">
+                  {/* Setup Instructions */}
+                  <div className="p-4 rounded-lg bg-muted/50 space-y-3">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <Info className="h-4 w-4 text-primary" />
+                      How to get your credentials
                     </div>
-                  ) : (
-                    <Button variant="gradient" onClick={handleConnectTelegram}>
-                      <Send className="h-4 w-4 mr-2" />
-                      Connect Telegram
+                    <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+                      <li>
+                        Open Telegram and search for{" "}
+                        <code className="bg-background px-1.5 py-0.5 rounded text-xs font-mono">@BotFather</code>
+                      </li>
+                      <li>
+                        Send <code className="bg-background px-1.5 py-0.5 rounded text-xs font-mono">/newbot</code> and follow the prompts to create your bot
+                      </li>
+                      <li>Copy the <strong>bot token</strong> that BotFather gives you</li>
+                      <li>
+                        To get your <strong>Chat ID</strong>: search for{" "}
+                        <code className="bg-background px-1.5 py-0.5 rounded text-xs font-mono">@userinfobot</code>{" "}
+                        on Telegram and send it any message — it will reply with your ID
+                      </li>
+                      <li>
+                        <strong>Important:</strong> Send any message to your new bot first (just say "hi") so it can message you back
+                      </li>
+                    </ol>
+                  </div>
+
+                  {/* Connect Form */}
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="bot_token">Bot Token</Label>
+                      <Input
+                        id="bot_token"
+                        type={showBotToken ? "text" : "password"}
+                        placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxYZ"
+                        value={botToken}
+                        onChange={(e) => setBotToken(e.target.value)}
+                        rightIcon={
+                          <button
+                            type="button"
+                            onClick={() => setShowBotToken(!showBotToken)}
+                          >
+                            {showBotToken ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        }
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="chat_id">Chat ID</Label>
+                      <Input
+                        id="chat_id"
+                        type="text"
+                        placeholder="123456789"
+                        value={chatId}
+                        onChange={(e) => setChatId(e.target.value)}
+                      />
+                    </div>
+
+                    <Button
+                      variant="gradient"
+                      onClick={handleConnectTelegram}
+                      disabled={isConnectingTelegram || !botToken.trim() || !chatId.trim()}
+                      className="w-full"
+                    >
+                      {isConnectingTelegram ? (
+                        <Spinner size="sm" className="mr-2" />
+                      ) : (
+                        <Send className="h-4 w-4 mr-2" />
+                      )}
+                      {isConnectingTelegram ? "Connecting..." : "Connect Telegram"}
                     </Button>
-                  )}
+                  </div>
                 </div>
               )}
             </CardContent>
