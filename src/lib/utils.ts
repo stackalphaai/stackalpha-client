@@ -14,6 +14,20 @@ export function formatCurrency(value: number, currency = "USD"): string {
   }).format(value)
 }
 
+export function formatPrice(value: number): string {
+  if (value === 0) return "$0"
+  const abs = Math.abs(value)
+  let decimals: number
+  if (abs >= 1000) decimals = 2
+  else if (abs >= 1) decimals = 4
+  else if (abs >= 0.01) decimals = 6
+  else decimals = 8
+  return "$" + new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: decimals,
+  }).format(value)
+}
+
 export function formatNumber(value: number, decimals = 2): string {
   return new Intl.NumberFormat("en-US", {
     minimumFractionDigits: decimals,

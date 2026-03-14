@@ -29,6 +29,7 @@ import { tradingApi } from "@/services/api"
 import { useSubscriptionModal } from "@/stores/subscription"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { InfoTooltip } from "@/components/ui/info-tooltip"
+import { formatPrice } from "@/lib/utils"
 import type { Signal } from "@/types"
 
 export default function SignalsPage() {
@@ -286,7 +287,7 @@ export default function SignalsPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs text-muted-foreground">Entry Price</p>
-                      <p className="font-medium">${signal.entry_price.toLocaleString()}</p>
+                      <p className="font-medium">{formatPrice(signal.entry_price)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">
@@ -300,12 +301,12 @@ export default function SignalsPage() {
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-1 text-green-500">
                       <Target className="h-4 w-4" />
-                      <span>${signal.take_profit_price.toLocaleString()}</span>
+                      <span>{formatPrice(signal.take_profit_price)}</span>
                       <InfoTooltip content="Take profit — position closes automatically at this price" iconClassName="text-green-500/50 hover:text-green-500" />
                     </div>
                     <div className="flex items-center gap-1 text-red-500">
                       <ShieldAlert className="h-4 w-4" />
-                      <span>${signal.stop_loss_price.toLocaleString()}</span>
+                      <span>{formatPrice(signal.stop_loss_price)}</span>
                       <InfoTooltip content="Stop loss — position closes to limit losses at this price" iconClassName="text-red-500/50 hover:text-red-500" />
                     </div>
                   </div>

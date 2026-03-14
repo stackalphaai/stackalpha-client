@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { InfoTooltip } from "@/components/ui/info-tooltip"
+import { formatPrice } from "@/lib/utils"
 import type { LiveTradeData } from "@/types"
 
 interface LiveTradeCardProps {
@@ -103,14 +104,14 @@ export function LiveTradeCard({ trade, priceChange, onClose }: LiveTradeCardProp
         <div className="grid grid-cols-3 gap-2 text-sm mb-3">
           <div>
             <p className="text-xs text-muted-foreground">Entry</p>
-            <p className="font-medium">${trade.entry_price?.toLocaleString() || "-"}</p>
+            <p className="font-medium">{trade.entry_price ? formatPrice(trade.entry_price) : "-"}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Current</p>
             <p className={`font-medium transition-colors duration-300 ${
               priceChange === "up" ? "text-green-500" : priceChange === "down" ? "text-red-500" : ""
             }`}>
-              ${trade.current_price?.toLocaleString() || "-"}
+              {trade.current_price ? formatPrice(trade.current_price) : "-"}
             </p>
           </div>
           <div>
@@ -128,14 +129,14 @@ export function LiveTradeCard({ trade, priceChange, onClose }: LiveTradeCardProp
             <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
               <div className="flex items-center gap-1">
                 <ShieldAlert className="h-3 w-3 text-red-400" />
-                <span>SL: ${trade.stop_loss_price.toLocaleString()}</span>
+                <span>SL: {formatPrice(trade.stop_loss_price)}</span>
                 {trade.sl_distance_pct !== null && (
                   <span className="text-red-400">({trade.sl_distance_pct > 0 ? "" : ""}{trade.sl_distance_pct}%)</span>
                 )}
               </div>
               <div className="flex items-center gap-1">
                 <Target className="h-3 w-3 text-green-400" />
-                <span>TP: ${trade.take_profit_price.toLocaleString()}</span>
+                <span>TP: {formatPrice(trade.take_profit_price)}</span>
                 {trade.tp_distance_pct !== null && (
                   <span className="text-green-400">({trade.tp_distance_pct > 0 ? "+" : ""}{trade.tp_distance_pct}%)</span>
                 )}

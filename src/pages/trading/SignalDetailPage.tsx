@@ -52,6 +52,7 @@ import { useSubscriptionModal } from "@/stores/subscription"
 import { toast } from "sonner"
 import { Separator } from "@/components/ui/separator"
 import type { SignalDetail, Wallet as WalletType, ExchangeConnection } from "@/types"
+import { formatPrice } from "@/lib/utils"
 
 const INDICATOR_LABELS: Record<string, string> = {
   rsi_14: "RSI (14)",
@@ -292,7 +293,7 @@ export default function SignalDetailPage() {
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground mb-1">Entry Price</p>
-            <p className="text-xl font-bold">${signal.entry_price.toLocaleString()}</p>
+            <p className="text-xl font-bold">{formatPrice(signal.entry_price)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -301,7 +302,7 @@ export default function SignalDetailPage() {
               <Target className="h-3 w-3 text-green-500" /> Take Profit
             </p>
             <p className="text-xl font-bold text-green-500">
-              ${signal.take_profit_price.toLocaleString()}
+              {formatPrice(signal.take_profit_price)}
             </p>
           </CardContent>
         </Card>
@@ -311,14 +312,14 @@ export default function SignalDetailPage() {
               <ShieldAlert className="h-3 w-3 text-red-500" /> Stop Loss
             </p>
             <p className="text-xl font-bold text-red-500">
-              ${signal.stop_loss_price.toLocaleString()}
+              {formatPrice(signal.stop_loss_price)}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground mb-1">Market Price</p>
-            <p className="text-xl font-bold">${signal.market_price_at_creation.toLocaleString()}</p>
+            <p className="text-xl font-bold">{formatPrice(signal.market_price_at_creation)}</p>
           </CardContent>
         </Card>
       </div>
@@ -618,15 +619,15 @@ export default function SignalDetailPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Entry Price</span>
-                <span className="font-medium">${signal.entry_price.toLocaleString()}</span>
+                <span className="font-medium">{formatPrice(signal.entry_price)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Take Profit</span>
-                <span className="font-medium text-green-500">${signal.take_profit_price.toLocaleString()}</span>
+                <span className="font-medium text-green-500">{formatPrice(signal.take_profit_price)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Stop Loss</span>
-                <span className="font-medium text-red-500">${signal.stop_loss_price.toLocaleString()}</span>
+                <span className="font-medium text-red-500">{formatPrice(signal.stop_loss_price)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">R:R Ratio</span>

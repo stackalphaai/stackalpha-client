@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TopGainers } from "@/components/features/TopGainers"
 import { tradingApi } from "@/services/api"
+import { formatPrice } from "@/lib/utils"
 import type { MarketData } from "@/types"
 
 export default function MarketsPage() {
@@ -163,7 +164,7 @@ export default function MarketsPage() {
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <p className="text-xs text-muted-foreground">Mark Price</p>
-                    <p className="font-medium">${market.mark_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="font-medium">{formatPrice(market.mark_price)}</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Volume 24h</p>
@@ -214,7 +215,7 @@ export default function MarketsPage() {
                       </div>
                     </td>
                     <td className="py-3 px-4 text-right font-medium">
-                      ${market.mark_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatPrice(market.mark_price)}
                     </td>
                     <td className="py-3 px-4 text-right">
                       <Badge

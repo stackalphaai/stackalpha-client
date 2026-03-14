@@ -39,6 +39,7 @@ import { showSuccessToast, showErrorToast } from "@/lib/api-error"
 import { useOpenTrades } from "@/hooks/useOpenTrades"
 import { LiveTradeCard } from "@/components/trading/LiveTradeCard"
 import { PortfolioSummary } from "@/components/trading/PortfolioSummary"
+import { formatPrice } from "@/lib/utils"
 import type { Trade, LiveTradeData } from "@/types"
 
 export default function TradesPage() {
@@ -164,7 +165,7 @@ export default function TradesPage() {
           <div>
             <p className="text-xs text-muted-foreground">Entry</p>
             <p className="font-medium">
-              ${trade.entry_price?.toLocaleString() || "-"}
+              {trade.entry_price ? formatPrice(trade.entry_price) : "-"}
             </p>
           </div>
           <div>

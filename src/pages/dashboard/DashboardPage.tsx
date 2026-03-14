@@ -32,6 +32,7 @@ import { InfoTooltip } from "@/components/ui/info-tooltip"
 import { TopGainers } from "@/components/features/TopGainers"
 import { analyticsApi, exchangeApi, tradingApi, walletApi } from "@/services/api"
 import { useAuthStore } from "@/stores/auth"
+import { formatPrice } from "@/lib/utils"
 import type { Signal, Trade, DailyPnL, TradeAnalytics } from "@/types"
 
 const containerVariants = {
@@ -389,7 +390,7 @@ export default function DashboardPage() {
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            Entry: ${signal.entry_price.toLocaleString()}
+                            Entry: {formatPrice(signal.entry_price)}
                           </p>
                         </div>
                       </div>
@@ -461,7 +462,7 @@ export default function DashboardPage() {
                         </span>
                       </div>
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Entry: ${trade.entry_price?.toLocaleString() || "-"}</span>
+                        <span>Entry: {trade.entry_price ? formatPrice(trade.entry_price) : "-"}</span>
                         <span>Size: ${trade.position_size_usd.toLocaleString()}</span>
                       </div>
                     </div>
