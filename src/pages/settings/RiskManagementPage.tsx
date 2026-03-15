@@ -388,8 +388,28 @@ export default function RiskManagementPage() {
 
               <div className="space-y-2">
                 <Label>
+                  Margin Per Trade ($)
+                  <InfoTooltip content="Fixed margin amount in USD to use per trade. When set, this determines position size directly: notional = margin × leverage. Leave at 0 to use percentage-based sizing instead" />
+                </Label>
+                <Input
+                  type="number"
+                  value={settings.margin_per_trade ?? 0}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      margin_per_trade: parseFloat(e.target.value) || null,
+                    })
+                  }
+                  min={0}
+                  step={10}
+                  placeholder="0 = use % sizing"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>
                   Max Position Size (%)
-                  <InfoTooltip content="Maximum percentage of account balance to risk on a single trade" />
+                  <InfoTooltip content="Maximum percentage of account balance to risk on a single trade. Used as fallback when margin per trade is not set" />
                 </Label>
                 <Input
                   type="number"
