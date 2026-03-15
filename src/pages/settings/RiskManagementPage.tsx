@@ -408,25 +408,6 @@ export default function RiskManagementPage() {
 
               <div className="space-y-2">
                 <Label>
-                  Max Position Size ($)
-                  <InfoTooltip content="Hard dollar cap on any single position regardless of account size" />
-                </Label>
-                <Input
-                  type="number"
-                  value={settings.max_position_size_usd}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      max_position_size_usd: parseFloat(e.target.value),
-                    })
-                  }
-                  min={100}
-                  step={100}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>
                   Max Open Positions
                   <InfoTooltip content="Maximum number of trades that can be open simultaneously. Limits overall exposure" />
                 </Label>
@@ -466,16 +447,16 @@ export default function RiskManagementPage() {
 
               <div className="space-y-2">
                 <Label>
-                  Max Leverage
-                  <InfoTooltip content="Maximum leverage multiplier allowed per trade. Higher leverage amplifies both gains and losses. Trades will be clamped to this value" />
+                  Leverage
+                  <InfoTooltip content="Leverage multiplier used for your trades. Higher leverage amplifies both gains and losses" />
                 </Label>
                 <Input
                   type="number"
-                  value={settings.max_leverage}
+                  value={settings.leverage}
                   onChange={(e) =>
                     setSettings({
                       ...settings,
-                      max_leverage: parseInt(e.target.value),
+                      leverage: parseInt(e.target.value),
                     })
                   }
                   min={1}
@@ -490,25 +471,6 @@ export default function RiskManagementPage() {
             <div className="font-medium">Drawdown Limits</div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>
-                  Max Daily Loss ($)
-                  <InfoTooltip content="Trading halts automatically if total losses exceed this dollar amount today" />
-                </Label>
-                <Input
-                  type="number"
-                  value={settings.max_daily_loss_usd}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      max_daily_loss_usd: parseFloat(e.target.value),
-                    })
-                  }
-                  min={10}
-                  step={10}
-                />
-              </div>
-
               <div className="space-y-2">
                 <Label>
                   Max Daily Loss (%)

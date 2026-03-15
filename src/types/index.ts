@@ -240,17 +240,15 @@ export type Theme = "light" | "dark" | "system"
 export interface RiskSettings {
   // Position Sizing
   position_sizing_method: "fixed_amount" | "fixed_percent" | "kelly" | "risk_parity"
-  max_position_size_usd: number
   max_position_size_percent: number
   risk_percent_per_trade: number
 
   // Portfolio Limits
   max_portfolio_heat: number
   max_open_positions: number
-  max_leverage: number
+  leverage: number
 
   // Drawdown Limits
-  max_daily_loss_usd: number
   max_daily_loss_percent: number
   max_weekly_loss_percent: number
   max_monthly_loss_percent: number
