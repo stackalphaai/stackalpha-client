@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   AlertDialog,
@@ -365,29 +364,6 @@ export default function RiskManagementPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>
-                  Position Sizing Method
-                  <InfoTooltip content="Fixed Percent: risk same % per trade. Fixed Amount: set $ amount. Kelly: optimal sizing from win rate. Risk Parity: equal risk per position" />
-                </Label>
-                <Select
-                  value={settings.position_sizing_method}
-                  onValueChange={(value) =>
-                    setSettings({ ...settings, position_sizing_method: value as any })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="fixed_percent">Fixed Percent</SelectItem>
-                    <SelectItem value="fixed_amount">Fixed Amount</SelectItem>
-                    <SelectItem value="kelly">Kelly Criterion</SelectItem>
-                    <SelectItem value="risk_parity">Risk Parity</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>
                   Margin Per Trade (%)
                   <InfoTooltip content="Percentage of your available balance to use as margin per trade. Combined with leverage, this determines your position size: notional = (balance × margin%) × leverage" />
                 </Label>
@@ -398,26 +374,6 @@ export default function RiskManagementPage() {
                     setSettings({
                       ...settings,
                       margin_per_trade_percent: parseFloat(e.target.value) || 1,
-                    })
-                  }
-                  min={1}
-                  max={100}
-                  step={1}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>
-                  Max Position Size (%)
-                  <InfoTooltip content="Maximum percentage of account balance to risk on a single trade. Used as fallback when margin per trade is not set" />
-                </Label>
-                <Input
-                  type="number"
-                  value={settings.max_position_size_percent}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      max_position_size_percent: parseFloat(e.target.value),
                     })
                   }
                   min={1}

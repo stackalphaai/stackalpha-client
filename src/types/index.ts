@@ -239,9 +239,7 @@ export type Theme = "light" | "dark" | "system"
 // Risk Management Types
 export interface RiskSettings {
   // Position Sizing
-  position_sizing_method: "fixed_amount" | "fixed_percent" | "kelly" | "risk_parity"
   margin_per_trade_percent: number
-  max_position_size_percent: number
   risk_percent_per_trade: number
 
   // Portfolio Limits
