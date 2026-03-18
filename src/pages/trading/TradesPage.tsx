@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import {
   TrendingUp,
@@ -44,7 +43,7 @@ import type { Trade, LiveTradeData } from "@/types"
 
 export default function TradesPage() {
   const { user } = useAuthStore()
-  const navigate = useNavigate()
+
   const openSubscription = useSubscriptionModal((s) => s.open)
   const [isLoading, setIsLoading] = useState(true)
   const [trades, setTrades] = useState<Trade[]>([])
@@ -124,10 +123,7 @@ export default function TradesPage() {
   }
 
   const TradeCard = ({ trade }: { trade: Trade }) => (
-    <Card
-      className="cursor-pointer hover:border-primary/50 transition-colors"
-      onClick={() => navigate(`/trades/${trade.id}`)}
-    >
+    <Card className="transition-colors">
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
