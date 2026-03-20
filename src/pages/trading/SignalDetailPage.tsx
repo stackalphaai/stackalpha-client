@@ -52,7 +52,7 @@ import { useSubscriptionModal } from "@/stores/subscription"
 import { toast } from "sonner"
 import { Separator } from "@/components/ui/separator"
 import type { SignalDetail, Wallet as WalletType, ExchangeConnection } from "@/types"
-import { formatPrice } from "@/lib/utils"
+import { formatPrice, formatRelativeTime } from "@/lib/utils"
 
 const INDICATOR_LABELS: Record<string, string> = {
   rsi_14: "RSI (14)",
@@ -276,6 +276,7 @@ export default function SignalDetailPage() {
               </div>
               <p className="text-sm text-muted-foreground">
                 {new Date(signal.created_at).toLocaleString()}
+                <span className="ml-2 text-xs opacity-75">({formatRelativeTime(signal.created_at)})</span>
               </p>
             </div>
           </div>

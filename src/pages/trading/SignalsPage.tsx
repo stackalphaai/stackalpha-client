@@ -29,7 +29,7 @@ import { tradingApi } from "@/services/api"
 import { useSubscriptionModal } from "@/stores/subscription"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { InfoTooltip } from "@/components/ui/info-tooltip"
-import { formatPrice } from "@/lib/utils"
+import { formatPrice, formatRelativeTime } from "@/lib/utils"
 import type { Signal } from "@/types"
 
 export default function SignalsPage() {
@@ -314,9 +314,7 @@ export default function SignalsPage() {
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      <span>
-                        {new Date(signal.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
-                      </span>
+                      <span>{formatRelativeTime(signal.created_at)}</span>
                     </div>
                     <span>
                       R:R {signal.risk_reward_ratio.toFixed(2)}
