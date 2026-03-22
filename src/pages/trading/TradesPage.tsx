@@ -39,6 +39,7 @@ import { useOpenTrades } from "@/hooks/useOpenTrades"
 import { LiveTradeCard } from "@/components/trading/LiveTradeCard"
 import { PortfolioSummary } from "@/components/trading/PortfolioSummary"
 import { formatPrice } from "@/lib/utils"
+import { TradeStats } from "@/components/trading/TradeStats"
 import type { Trade, LiveTradeData } from "@/types"
 
 export default function TradesPage() {
@@ -313,6 +314,9 @@ export default function TradesPage() {
           </Select>
         </div>
       </div>
+
+      {/* Trade Performance Stats */}
+      <TradeStats />
 
       {/* Tabs */}
       <Tabs defaultValue="open">
