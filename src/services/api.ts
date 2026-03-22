@@ -212,6 +212,7 @@ export const exchangeApi = {
     api.patch(`/v1/exchanges/${id}/trading`, { enabled }),
   syncBalance: (id: string) => api.post(`/v1/exchanges/${id}/sync`),
   disconnect: (id: string) => api.delete(`/v1/exchanges/${id}`),
+  getSetupInfo: () => api.get("/v1/exchanges/setup-info"),
 }
 
 // Subscription API
