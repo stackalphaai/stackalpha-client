@@ -23,6 +23,9 @@ import {
   CircleDollarSign,
   Network,
   ShieldCheck,
+  CandlestickChart as CandlestickIcon,
+  Layers,
+  CheckCircle2,
 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -31,6 +34,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { CandlestickChart, type Candle } from "@/components/charts"
 import {
   Dialog,
   DialogContent,
@@ -121,6 +125,11 @@ export default function SignalDetailPage() {
   const [copied, setCopied] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
 
+  // Chart state
+  const [candles, setCandles] = useState<Candle[]>([])
+  const [chartInterval, setChartInterval] = useState("15m")
+  const [isLoadingCandles, setIsLoadingCandles] = useState(false)
+
   const isBinanceSignal = signal?.exchange === "binance"
 
   useEffect(() => {
@@ -137,6 +146,27 @@ export default function SignalDetailPage() {
     }
     fetchSignal()
   }, [id])
+
+  // Fetch candles when signal loads or interval changes
+  useEffect(() => {
+    if (!signal) return
+    const fetchCandles = async () => {
+      setIsLoadingCandles(true)
+      try {
+        const response = await tradingApi.getCandles(signal.symbol, {
+          exchange: signal.exchange,
+          interval: chartInterval,
+          limit: 100,
+        })
+        setCandles(response.data.candles || [])
+      } catch {
+        setCandles([])
+      } finally {
+        setIsLoadingCandles(false)
+      }
+    }
+    fetchCandles()
+  }, [signal?.symbol, signal?.exchange, chartInterval])
 
   const openExecuteDialog = async () => {
     if (!user?.has_active_subscription && !user?.is_subscribed) {
@@ -243,6 +273,15 @@ export default function SignalDetailPage() {
   const isLong = signal.direction === "long"
   const indicators = signal.technical_indicators
   const analysis = signal.analysis_data
+
+  // Extract MTF data (stored alongside indicators for Binance signals)
+  const mtfData = indicators ? {
+    bias: (indicators as Record<string, unknown>).mtf_bias as string | undefined,
+    stopLoss: (indicators as Record<string, unknown>).mtf_stop_loss as number | undefined,
+    tpZones: (indicators as Record<string, unknown>).mtf_tp_zones as number[] | undefined,
+    triggerPattern: (indicators as Record<string, unknown>).mtf_trigger_pattern as string | undefined,
+    structureLevel: (indicators as Record<string, unknown>).mtf_structure_level as number | undefined,
+  } : null
   const selectedWallet = wallets.find((w) => w.id === selectedWalletId)
   const selectedExchange = exchanges.find((e) => e.id === selectedExchangeId)
 
@@ -379,6 +418,135 @@ export default function SignalDetailPage() {
         </Card>
       </div>
 
+      {/* Candlestick Chart */}
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <CandlestickIcon className="h-5 w-5 text-primary" />
+              Price Chart
+            </CardTitle>
+            <div className="flex gap-1">
+              {["5m", "15m", "1h", "4h"].map((interval) => (
+                <Button
+                  key={interval}
+                  variant={chartInterval === interval ? "default" : "ghost"}
+                  size="sm"
+                  className="h-7 px-2.5 text-xs"
+                  onClick={() => setChartInterval(interval)}
+                >
+                  {interval}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {isLoadingCandles ? (
+            <Skeleton className="w-full h-[400px] rounded-lg" />
+          ) : (
+            <CandlestickChart
+              candles={candles}
+              entryPrice={signal.entry_price}
+              takeProfitPrice={signal.take_profit_price}
+              stopLossPrice={signal.stop_loss_price}
+              direction={signal.direction}
+              height={400}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Multi-Timeframe Analysis (Binance signals with MTF data) */}
+      {mtfData?.bias && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Layers className="h-5 w-5 text-primary" />
+              4-Timeframe Analysis
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {/* 4h Trend */}
+              <div className="rounded-lg border p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">4H TREND</span>
+                  <Badge variant={mtfData.bias === "BUY" ? "long" : "short"} className="text-[10px]">
+                    {mtfData.bias}
+                  </Badge>
+                </div>
+                <p className="text-sm font-semibold">
+                  {mtfData.bias === "BUY" ? "Higher Highs & Lows" : "Lower Highs & Lows"}
+                </p>
+                <p className="text-xs text-muted-foreground">Sets directional bias</p>
+              </div>
+
+              {/* 1h Confirmation */}
+              <div className="rounded-lg border p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">1H CONFIRM</span>
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                </div>
+                <p className="text-sm font-semibold">Trend Confirmed</p>
+                {mtfData.tpZones && mtfData.tpZones.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    TP Zone: {formatPrice(mtfData.tpZones[0])}
+                  </p>
+                )}
+              </div>
+
+              {/* 15m Entry Zone */}
+              <div className="rounded-lg border p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">15M ZONE</span>
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                </div>
+                <p className="text-sm font-semibold">At Entry Zone</p>
+                {mtfData.structureLevel && (
+                  <p className="text-xs text-muted-foreground">
+                    Structure: {formatPrice(mtfData.structureLevel)}
+                  </p>
+                )}
+              </div>
+
+              {/* 5m Trigger */}
+              <div className="rounded-lg border p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">5M TRIGGER</span>
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                </div>
+                <p className="text-sm font-semibold capitalize">
+                  {(mtfData.triggerPattern || "").replace(/_/g, " ")}
+                </p>
+                <p className="text-xs text-muted-foreground">Entry pattern confirmed</p>
+              </div>
+            </div>
+
+            {/* SL from structure */}
+            {mtfData.stopLoss && (
+              <div className="mt-4 flex items-center gap-4 rounded-lg border border-red-500/20 bg-red-500/5 p-3">
+                <ShieldAlert className="h-5 w-5 text-red-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium">Structure-Based Stop Loss</p>
+                  <p className="text-xs text-muted-foreground">
+                    Behind 15m structure + 1x 5m ATR buffer
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-red-500">
+                    {formatPrice(mtfData.stopLoss)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {(Math.abs(signal.entry_price - mtfData.stopLoss) / signal.entry_price * 100).toFixed(2)}% from entry
+                  </p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Outcome (if executed) */}
       {signal.outcome !== "pending" && (
         <Card
@@ -481,16 +649,18 @@ export default function SignalDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                {Object.entries(indicators).map(([key, value]) => (
-                  <div key={key} className="flex justify-between">
-                    <span className="text-muted-foreground">
-                      {INDICATOR_LABELS[key] || key}
-                    </span>
-                    <span className="font-mono font-medium">
-                      {formatIndicatorValue(key, value)}
-                    </span>
-                  </div>
-                ))}
+                {Object.entries(indicators)
+                  .filter(([key]) => !key.startsWith("mtf_") && typeof indicators[key] === "number")
+                  .map(([key, value]) => (
+                    <div key={key} className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        {INDICATOR_LABELS[key] || key}
+                      </span>
+                      <span className="font-mono font-medium">
+                        {formatIndicatorValue(key, value as number)}
+                      </span>
+                    </div>
+                  ))}
               </div>
             </CardContent>
           </Card>

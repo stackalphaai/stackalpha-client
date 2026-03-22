@@ -192,6 +192,8 @@ export const tradingApi = {
   getMarkets: () => api.get("/v1/trading/markets"),
   getMarket: (symbol: string) => api.get(`/v1/trading/markets/${symbol}`),
   getSignalStats: () => api.get("/v1/trading/signal-stats"),
+  getCandles: (symbol: string, params?: { exchange?: string; interval?: string; limit?: number }) =>
+    api.get(`/v1/trading/candles/${symbol}`, { params }),
 }
 
 // Exchange API
