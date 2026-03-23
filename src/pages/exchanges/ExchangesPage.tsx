@@ -61,6 +61,7 @@ export default function ExchangesPage() {
   const [syncingId, setSyncingId] = useState<string | null>(null)
   const [disconnectId, setDisconnectId] = useState<string | null>(null)
   const [connectStep, setConnectStep] = useState<"guide" | "keys">("guide")
+  const [connectError, setConnectError] = useState("")
   const [serverIp, setServerIp] = useState("")
   const [copiedIp, setCopiedIp] = useState(false)
 
@@ -84,6 +85,7 @@ export default function ExchangesPage() {
     setApiKey("")
     setApiSecret("")
     setLabel("")
+    setConnectError("")
     setIsTestnet(false)
     setShowConnectDialog(true)
     try {
@@ -105,6 +107,7 @@ export default function ExchangesPage() {
     if (!apiKey || !apiSecret) return
 
     setIsConnecting(true)
+    setConnectError("")
     try {
       await exchangeApi.connect({
         exchange_type: "binance",
@@ -117,7 +120,9 @@ export default function ExchangesPage() {
       setShowConnectDialog(false)
       fetchConnections()
     } catch (error) {
-      showErrorToast(error, "Failed to connect exchange")
+      const { getErrorMessage } = await import("@/lib/api-error")
+      const msg = getErrorMessage(error)
+      setConnectError(msg)
     } finally {
       setIsConnecting(false)
     }
@@ -540,6 +545,12 @@ export default function ExchangesPage() {
                   </div>
                   <Switch checked={isTestnet} onCheckedChange={setIsTestnet} />
                 </div>
+                {connectError && (
+                  <div className="flex gap-2.5 p-3 rounded-lg bg-destructive/10 border border-destructive/30">
+                    <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                    <p className="text-xs text-destructive">{connectError}</p>
+                  </div>
+                )}
                 <div className="flex gap-2">
                   <Button variant="outline" className="flex-1" onClick={() => setConnectStep("guide")}>
                     Back

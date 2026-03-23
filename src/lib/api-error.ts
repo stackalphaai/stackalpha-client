@@ -83,8 +83,10 @@ export function getErrorMessage(error: unknown): string {
  */
 export function showErrorToast(error: unknown, fallbackMessage?: string): void {
   const message = getErrorMessage(error)
-  toast.error(fallbackMessage || message, {
-    duration: 5000,
+  // Use the actual API error message when available, fallback only if generic
+  const isGenericMessage = message.startsWith("An error occurred") || message === "An unexpected error occurred"
+  toast.error(isGenericMessage && fallbackMessage ? fallbackMessage : message, {
+    duration: 6000,
   })
 }
 
