@@ -130,21 +130,21 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
       // Items with children: render as expandable button
       if (hasChildren && (!collapsed || mobileOpen)) {
         return (
-          <div key={item.href}>
+          <div key={item.href} className="px-2">
             <button
               onClick={() => toggleExpand(item.href)}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 w-full",
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all duration-300 w-full group",
                 isHighlighted
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  ? "bg-primary text-white shadow-lg shadow-primary/20"
+                  : "text-zinc-500 hover:bg-white/5 hover:text-white"
               )}
             >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
-              <span>{item.label}</span>
+              <item.icon className={cn("h-5 w-5 flex-shrink-0 transition-transform duration-300", isHighlighted && "scale-110")} />
+              <span className="tracking-tight">{item.label}</span>
               <ChevronDown
                 className={cn(
-                  "ml-auto h-4 w-4 transition-transform duration-200",
+                  "ml-auto h-4 w-4 transition-transform duration-300 opacity-50",
                   isExpanded && "rotate-180"
                 )}
               />
@@ -155,10 +155,10 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
                   className="overflow-hidden"
                 >
-                  <div className="ml-4 mt-1 space-y-0.5 border-l border-border pl-3">
+                  <div className="ml-6 mt-1 space-y-1 border-l border-white/5 pl-4">
                     {item.children!.map((child) => {
                       const isChildItemActive = location.pathname === child.href
                       return (
@@ -167,10 +167,10 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                           to={child.href}
                           onClick={handleNavClick}
                           className={cn(
-                            "flex items-center rounded-md px-3 py-2 text-sm transition-all duration-200",
+                            "flex items-center rounded-lg px-3 py-2 text-xs font-bold transition-all duration-200",
                             isChildItemActive
-                              ? "text-primary font-medium bg-primary/10"
-                              : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                              ? "text-primary bg-primary/10"
+                              : "text-zinc-500 hover:text-white hover:bg-white/5"
                           )}
                         >
                           {child.label}
@@ -187,33 +187,35 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
 
       // Regular nav item (no children, or collapsed)
       const NavItemEl = (
-        <NavLink
-          key={item.href}
-          to={hasChildren ? item.children![0].href : item.href}
-          onClick={handleNavClick}
-          className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-            isHighlighted
-              ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-          )}
-        >
-          <item.icon className={cn("h-5 w-5 flex-shrink-0", collapsed && !mobileOpen && "mx-auto")} />
-          {(!collapsed || mobileOpen) && <span>{item.label}</span>}
-          {isHighlighted && (!collapsed || mobileOpen) && isMain && (
-            <motion.div
-              layoutId="activeIndicator"
-              className="ml-auto h-2 w-2 rounded-full bg-white"
-            />
-          )}
-        </NavLink>
+        <div className="px-2">
+          <NavLink
+            key={item.href}
+            to={hasChildren ? item.children![0].href : item.href}
+            onClick={handleNavClick}
+            className={cn(
+              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all duration-300 group",
+              isHighlighted
+                ? "bg-primary text-white shadow-lg shadow-primary/20"
+                : "text-zinc-500 hover:bg-white/5 hover:text-white"
+            )}
+          >
+            <item.icon className={cn("h-5 w-5 flex-shrink-0 transition-transform duration-300", isHighlighted && "scale-110", collapsed && !mobileOpen && "mx-auto")} />
+            {(!collapsed || mobileOpen) && <span className="tracking-tight">{item.label}</span>}
+            {isHighlighted && (!collapsed || mobileOpen) && isMain && (
+              <motion.div
+                layoutId="activeIndicator"
+                className="ml-auto h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]"
+              />
+            )}
+          </NavLink>
+        </div>
       )
 
       if (collapsed && !mobileOpen) {
         return (
           <Tooltip key={item.href}>
             <TooltipTrigger asChild>{NavItemEl}</TooltipTrigger>
-            <TooltipContent side="right">{item.label}</TooltipContent>
+            <TooltipContent side="right" className="font-bold">{item.label}</TooltipContent>
           </Tooltip>
         )
       }
@@ -224,27 +226,29 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const sidebarContent = (
     <>
       {/* Logo */}
-      <div className="flex h-16 items-center justify-between px-4 border-b">
+      <div className="flex h-20 items-center justify-between px-6 mb-4">
         <AnimatePresence mode="wait">
           {(!collapsed || mobileOpen) && (
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="flex items-center gap-2"
+              className="flex items-center gap-3 group cursor-pointer"
+              onClick={() => window.location.href = "/"}
             >
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-                <img className="h-5 w-5" src="https://res.cloudinary.com/deioo5lrm/image/upload/v1769925235/stackalpha_qyuyms.png" alt="" />
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-fuchsia-600 flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300 relative overflow-hidden">
+                <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                <img className="h-10 w-10" src="https://res.cloudinary.com/deioo5lrm/image/upload/v1769925235/stackalpha_qyuyms.png" alt="" />
               </div>
-              <span className="font-bold text-xl bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              <span className="font-black text-xl gradient-text tracking-tighter">
                 StackAlpha
               </span>
             </motion.div>
           )}
         </AnimatePresence>
         {collapsed && !mobileOpen && (
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center mx-auto">
-            <Zap className="h-5 w-5 text-white" />
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-fuchsia-600 flex items-center justify-center mx-auto shadow-lg shadow-primary/20 group cursor-pointer">
+            <Zap className="h-6 w-6 text-white group-hover:scale-110 transition-transform duration-300" />
           </div>
         )}
         {/* Mobile close button */}
@@ -252,45 +256,47 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="md:hidden text-zinc-500 hover:text-white"
             onClick={onMobileClose}
             aria-label="Close navigation menu"
           >
-            <X className="h-5 w-5" />
+            <X className="h-6 w-6" />
           </Button>
         )}
       </div>
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 px-3 py-4">
-        <nav className="space-y-1">
+      <ScrollArea className="flex-1 px-1">
+        <nav className="space-y-1.5">
           {renderNavItems(mainNavItems, true)}
         </nav>
 
-        <Separator className="my-4" />
+        <div className="px-6 py-6">
+          <Separator className="bg-white/5" />
+        </div>
 
-        <nav className="space-y-1">
+        <nav className="space-y-1.5">
           {renderNavItems(secondaryNavItems, false)}
         </nav>
       </ScrollArea>
 
       {/* Footer — User info + Logout */}
-      <div className="border-t p-3 space-y-2">
+      <div className="p-4 space-y-2">
         {collapsed && !mobileOpen ? (
           <>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex justify-center">
-                  <Avatar className="h-9 w-9">
-                    <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                <div className="flex justify-center mb-4">
+                  <Avatar className="h-10 w-10 border border-white/10">
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-black">
                       {getInitials(user?.full_name)}
                     </AvatarFallback>
                   </Avatar>
                 </div>
               </TooltipTrigger>
               <TooltipContent side="right">
-                <p className="font-medium">{user?.full_name || "User"}</p>
-                <p className="text-xs text-muted-foreground">{user?.email}</p>
+                <p className="font-black">{user?.full_name || "User"}</p>
+                <p className="text-xs text-zinc-500">{user?.email}</p>
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -298,7 +304,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="w-full text-muted-foreground hover:text-destructive"
+                  className="w-full text-zinc-500 hover:text-red-400 hover:bg-red-400/10 rounded-xl h-10"
                   onClick={() => setShowLogoutDialog(true)}
                   aria-label="Logout"
                 >
@@ -309,32 +315,32 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
             </Tooltip>
           </>
         ) : (
-          <>
-            <div className="flex items-center gap-3 px-2 py-1.5">
-              <Avatar className="h-9 w-9 flex-shrink-0">
-                <AvatarFallback className="bg-primary/20 text-primary text-xs">
+          <div className="glass-dark rounded-[2rem] p-4 border-white/5">
+            <div className="flex items-center gap-3 px-2 py-2 mb-3">
+              <Avatar className="h-10 w-10 flex-shrink-0 border border-white/10">
+                <AvatarFallback className="bg-primary/10 text-primary text-xs font-black">
                   {getInitials(user?.full_name)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <p className="text-sm font-medium truncate">{user?.full_name || "User"}</p>
+                  <p className="text-sm font-black text-white truncate">{user?.full_name || "User"}</p>
                   {user?.has_active_subscription && (
-                    <Badge variant="success" className="text-[10px] px-1.5 py-0">Pro</Badge>
+                    <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] px-2 py-0 font-black tracking-widest uppercase">Pro</Badge>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                <p className="text-[10px] text-zinc-500 truncate font-bold tracking-tight">{user?.email}</p>
               </div>
             </div>
             <Button
               variant="ghost"
-              className="w-full justify-start text-muted-foreground hover:text-destructive"
+              className="w-full justify-start text-zinc-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl font-bold text-xs"
               onClick={() => setShowLogoutDialog(true)}
             >
-              <LogOut className="h-5 w-5 mr-3" />
+              <LogOut className="h-4 w-4 mr-3" />
               Logout
             </Button>
-          </>
+          </div>
         )}
       </div>
 
@@ -343,7 +349,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="absolute -right-3 top-20 h-6 w-6 rounded-full border bg-background shadow-md hidden md:flex"
+          className="absolute -right-3 top-24 h-6 w-6 rounded-full border border-white/10 bg-zinc-900 shadow-xl hidden md:flex text-zinc-500 hover:text-white"
           onClick={() => setCollapsed(!collapsed)}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
@@ -363,7 +369,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
       <motion.aside
         initial={false}
         animate={{ width: collapsed ? 80 : 280 }}
-        className="fixed left-0 top-0 z-40 h-screen border-r bg-card/50 backdrop-blur-xl flex-col hidden md:flex"
+        className="fixed left-0 top-0 z-40 h-screen border-r border-white/5 bg-black/40 backdrop-blur-3xl flex-col hidden md:flex"
       >
         {sidebarContent}
       </motion.aside>

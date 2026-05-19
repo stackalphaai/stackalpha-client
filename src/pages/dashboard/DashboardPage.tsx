@@ -154,7 +154,7 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
-            <Card key={i}>
+            <Card key={i} className="shimmer">
               <CardContent className="p-6">
                 <Skeleton className="h-4 w-24 mb-2" />
                 <Skeleton className="h-8 w-32" />
@@ -163,12 +163,12 @@ export default function DashboardPage() {
           ))}
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          <Card>
+          <Card className="shimmer">
             <CardContent className="p-6">
               <Skeleton className="h-[300px]" />
             </CardContent>
           </Card>
-          <Card>
+          <Card className="shimmer">
             <CardContent className="p-6">
               <Skeleton className="h-[300px]" />
             </CardContent>
@@ -183,41 +183,23 @@ export default function DashboardPage() {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-6"
+      className="space-y-8 relative"
     >
-      {/* Error Banner */}
-      {hasError && (
-        <motion.div variants={itemVariants}>
-          <Card className="border-destructive/50 bg-destructive/5">
-            <CardContent className="flex items-center justify-between p-4">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="h-5 w-5 text-destructive" />
-                <div>
-                  <p className="font-medium text-sm">Failed to load some data</p>
-                  <p className="text-xs text-muted-foreground">Some sections may be showing stale or empty data</p>
-                </div>
-              </div>
-              <Button variant="outline" size="sm" onClick={fetchDashboardData}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Retry
-              </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
+      <div className="aurora-glow w-[400px] h-[400px] top-[-10%] right-[-10%] opacity-20" />
 
       {/* Welcome Banner */}
       {!user?.has_active_subscription && !user?.is_subscribed && (
         <motion.div variants={itemVariants}>
-          <Card className="bg-gradient-to-r from-primary/20 via-primary/10 to-transparent border-primary/20">
-            <CardContent className="flex items-center justify-between p-6">
+          <Card glossy className="border-primary/20 bg-gradient-to-r from-primary/10 via-card to-card overflow-hidden group">
+            <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity shimmer" />
+            <CardContent className="flex items-center justify-between p-8 relative">
               <div>
-                <h3 className="text-lg font-semibold">Upgrade to Pro</h3>
-                <p className="text-muted-foreground">
+                <h3 className="text-2xl font-black gradient-text mb-1">Upgrade to Pro</h3>
+                <p className="text-zinc-400 font-medium">
                   Get unlimited signals and auto-trading features
                 </p>
               </div>
-              <Button variant="gradient" onClick={openSubscription}>
+              <Button variant="gradient" size="lg" onClick={openSubscription} className="btn-glow px-8">
                 Upgrade Now
               </Button>
             </CardContent>
@@ -228,40 +210,33 @@ export default function DashboardPage() {
       {/* Stats Grid */}
       <motion.div
         variants={itemVariants}
-        className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+        className="grid gap-6 md:grid-cols-2 lg:grid-cols-4"
       >
         {stats.map((stat) => (
-          <Card key={stat.title} className="relative overflow-hidden">
+          <Card key={stat.title} className="relative group overflow-hidden border-white/5 bg-black/40 backdrop-blur-3xl">
+            <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">
+                <div className="relative z-10">
+                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1">
                     {stat.title}
                     <InfoTooltip content={stat.tooltip} />
                   </p>
-                  <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
-                  <div className="flex items-center mt-1">
-                    {stat.trend === "up" && (
-                      <ArrowUpRight className="h-4 w-4 text-green-500 mr-1" />
-                    )}
-                    {stat.trend === "down" && (
-                      <ArrowDownRight className="h-4 w-4 text-red-500 mr-1" />
-                    )}
-                    <span
-                      className={`text-xs ${
-                        stat.trend === "up"
-                          ? "text-green-500"
-                          : stat.trend === "down"
-                          ? "text-red-500"
-                          : "text-muted-foreground"
-                      }`}
-                    >
+                  <h3 className="text-3xl font-black text-white mt-2 tracking-tight">{stat.value}</h3>
+                  <div className="flex items-center mt-2">
+                    <div className={cn(
+                      "flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter",
+                      stat.trend === "up" ? "bg-green-500/10 text-green-400" : 
+                      stat.trend === "down" ? "bg-red-500/10 text-red-400" : "bg-zinc-500/10 text-zinc-400"
+                    )}>
+                      {stat.trend === "up" && <ArrowUpRight className="h-3 w-3 mr-0.5" />}
+                      {stat.trend === "down" && <ArrowDownRight className="h-3 w-3 mr-0.5" />}
                       {stat.change}
-                    </span>
+                    </div>
                   </div>
                 </div>
-                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <stat.icon className="h-6 w-6 text-primary" />
+                <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-white/5 shadow-inner">
+                  <stat.icon className="h-7 w-7 text-primary" />
                 </div>
               </div>
             </CardContent>

@@ -87,31 +87,58 @@
 
 @layer components {
   .glass {
-    @apply bg-white/10 backdrop-blur-lg border border-white/20;
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)];
   }
 
   .glass-dark {
-    @apply bg-black/20 backdrop-blur-lg border border-white/10;
+    @apply bg-black/40 backdrop-blur-xl border border-white/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.8)];
+  }
+
+  .glass-glossy {
+    @apply bg-white/10 backdrop-blur-2xl border border-white/20 shadow-2xl relative overflow-hidden;
+  }
+
+  .glass-glossy::before {
+    content: "";
+    @apply absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none;
+  }
+
+  .mesh-gradient {
+    background-color: hsla(262, 50%, 5%, 1);
+    background-image:
+      radial-gradient(at 0% 0%, hsla(262, 83%, 58%, 0.15) 0px, transparent 50%),
+      radial-gradient(at 50% 0%, hsla(280, 83%, 58%, 0.1) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(262, 83%, 58%, 0.15) 0px, transparent 50%),
+      radial-gradient(at 50% 50%, hsla(262, 83%, 58%, 0.05) 0px, transparent 50%);
+  }
+
+  .aurora-glow {
+    @apply absolute -z-10 blur-[120px] opacity-50;
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, #a855f7 50%, #ec4899 100%);
   }
 
   .gradient-text {
-    @apply bg-gradient-to-r from-purple-500 via-violet-500 to-purple-600 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-purple-400 via-violet-400 to-fuchsia-500 bg-clip-text text-transparent font-extrabold tracking-tight;
   }
 
   .gradient-border {
-    @apply relative before:absolute before:inset-0 before:rounded-lg before:p-[1px] before:bg-gradient-to-r before:from-purple-500 before:via-violet-500 before:to-purple-600;
+    @apply relative before:absolute before:inset-0 before:rounded-[inherit] before:p-[1px] before:bg-gradient-to-r before:from-purple-500/50 before:via-violet-500/50 before:to-fuchsia-500/50 before:-z-10;
   }
 
   .card-hover {
-    @apply transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10 hover:-translate-y-1;
+    @apply transition-all duration-500 hover:shadow-[0_0_30px_rgba(139,92,246,0.2)] hover:-translate-y-2 hover:border-primary/30;
   }
 
   .btn-glow {
-    @apply relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:-translate-x-full hover:before:translate-x-full before:transition-transform before:duration-700;
+    @apply relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:-translate-x-full hover:before:translate-x-full before:transition-transform before:duration-1000 before:ease-in-out shadow-lg shadow-primary/20 hover:shadow-primary/40;
+  }
+
+  .shimmer {
+    @apply relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent;
   }
 
   .input-focus {
-    @apply focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all duration-200;
+    @apply focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500/50 transition-all duration-300 bg-white/5 backdrop-blur-sm;
   }
 
   .scrollbar-thin {
@@ -130,31 +157,33 @@
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background: hsl(var(--primary) / 0.3);
-    border-radius: 3px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--primary) / 0.5);
+    background-clip: content-box;
   }
 
   /* Price animations */
   .price-up {
-    @apply text-green-500 animate-pulse;
+    @apply text-green-400 animate-pulse;
+    text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
   }
 
   .price-down {
-    @apply text-red-500 animate-pulse;
+    @apply text-red-400 animate-pulse;
+    text-shadow: 0 0 10px rgba(248, 113, 113, 0.3);
   }
 
-  /* Custom number input */
-  input[type="number"]::-webkit-inner-spin-button,
-  input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+  .bento-grid {
+    @apply grid grid-cols-1 md:grid-cols-3 gap-6;
   }
 
-  input[type="number"] {
-    -moz-appearance: textfield;
+  .bento-item {
+    @apply glass-dark rounded-3xl p-8 card-hover flex flex-col justify-between min-h-[280px];
   }
 }
 
