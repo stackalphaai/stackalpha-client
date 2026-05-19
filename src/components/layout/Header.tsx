@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { motion } from "framer-motion"
 import { Moon, Sun, Monitor, Bell, User, LogOut, Settings, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -24,6 +25,7 @@ import { Badge } from "@/components/ui/badge"
 import { useThemeStore, applyTheme } from "@/stores/theme"
 import { useAuthStore } from "@/stores/auth"
 import type { Theme } from "@/types"
+import { cn } from "@/lib/utils"
 import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 

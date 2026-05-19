@@ -11,8 +11,6 @@ import {
   Activity,
   ArrowUpRight,
   ArrowDownRight,
-  RefreshCw,
-  AlertCircle,
 } from "lucide-react"
 import {
   AreaChart,
@@ -32,7 +30,7 @@ import { InfoTooltip } from "@/components/ui/info-tooltip"
 import { TopGainers } from "@/components/features/TopGainers"
 import { analyticsApi, exchangeApi, tradingApi, walletApi } from "@/services/api"
 import { useAuthStore } from "@/stores/auth"
-import { formatPrice } from "@/lib/utils"
+import { cn, formatPrice } from "@/lib/utils"
 import type { Signal, Trade, DailyPnL, TradeAnalytics } from "@/types"
 
 const containerVariants = {
@@ -55,7 +53,6 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   const openSubscription = useSubscriptionModal((s) => s.open)
   const [isLoading, setIsLoading] = useState(true)
-  const [hasError, setHasError] = useState(false)
   const [analytics, setAnalytics] = useState<TradeAnalytics | null>(null)
   const [dailyPnL, setDailyPnL] = useState<DailyPnL[]>([])
   const [activeSignals, setActiveSignals] = useState<Signal[]>([])
@@ -63,7 +60,6 @@ export default function DashboardPage() {
   const [totalBalance, setTotalBalance] = useState<number>(0)
 
   const fetchDashboardData = async () => {
-    setHasError(false)
     try {
       const [analyticsRes, pnlRes, signalsRes, tradesRes, walletsRes, exchangesRes] = await Promise.allSettled([
         analyticsApi.getTradeAnalytics("30d"),
@@ -73,11 +69,6 @@ export default function DashboardPage() {
         walletApi.getWallets(),
         exchangeApi.getConnections(),
       ])
-
-      const allRejected = [analyticsRes, pnlRes, signalsRes, tradesRes, walletsRes, exchangesRes].every(
-        (r) => r.status === "rejected"
-      )
-      if (allRejected) setHasError(true)
 
       if (analyticsRes.status === "fulfilled") setAnalytics(analyticsRes.value.data)
       if (pnlRes.status === "fulfilled") setDailyPnL(pnlRes.value.data)
@@ -100,8 +91,6 @@ export default function DashboardPage() {
         )
       }
       setTotalBalance(balance)
-    } catch {
-      setHasError(true)
     } finally {
       setIsLoading(false)
     }

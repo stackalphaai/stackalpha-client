@@ -6,9 +6,7 @@ import {
   Bot,
   ChevronRight,
   Gift,
-  Globe,
   LineChart,
-  Lock,
   Rocket,
   Shield,
   Sparkles,
@@ -21,7 +19,6 @@ import {
   ArrowUpRight,
 } from "lucide-react"
 import { Button } from "@/components/ui"
-import { TopGainers } from "@/components/features"
 import { cn } from "@/lib/utils"
 
 const containerVariants = {
